@@ -7,27 +7,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 @ComponentScan(basePackages = "org.onelab")
 public class AppConfig {
 
+
     @Bean
     @Primary
-    public DishRepository dishRepository() {
-        return new DishRepositoryImpl();
+    public DishRepository dishRepository(JdbcTemplate jdbcTemplate) {
+        return new DishRepositoryImpl(jdbcTemplate);
     }
 
     @Bean
     @Primary
-    public UserRepository userRepository() {
-        return new UserRepositoryImpl();
+    public UserRepository userRepository(JdbcTemplate jdbcTemplate) {
+        return new UserRepositoryImpl(jdbcTemplate);
     }
 
     @Bean
     @Primary
-    public OrderRepository orderRepository() {
-        return new OrderRepositoryImpl();
+    public OrderRepository orderRepository(JdbcTemplate jdbcTemplate) {
+        return new OrderRepositoryImpl(jdbcTemplate);
     }
 
     @Bean

@@ -14,4 +14,6 @@ public interface RestaurantService {
     void addDish(DishDto dishDto);
     List<DishDto> getDishes();
     List<OrderDto> getOrders();
+    OrderDto getOrder(long orderId);
+    void updateOrder(OrderDto order);
 }

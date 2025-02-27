@@ -1,34 +1,63 @@
 package org.onelab.repository;
 
-import org.onelab.dto.OrderDto;
+import org.onelab.entity.Order;
+import org.onelab.entity.OrderStatus;
+import org.onelab.entity.User;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Repository
 public class OrderRepositoryImpl implements OrderRepository {
-    private final Map<Long, OrderDto> orders = new HashMap<>();
+    private final JdbcTemplate jdbcTemplate;
 
-    public void save(OrderDto order) {
-        orders.put(order.getId(), order);
-    }
-
-    public OrderDto findById(Long id) {
-        return orders.get(id);
+    public OrderRepositoryImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public List<OrderDto> findAll() {
-        return new ArrayList<>(orders.values());
+    public void save(Order order) {
+        String sql = "INSERT INTO orders (customer_id, status, total_price) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql,
+                order.getCustomer().getId(),
+                order.getStatus().name(),
+                order.getTotalPrice()
+        );
     }
 
-    public List<OrderDto> findByUserId(Long userId) {
-        return orders.values().stream()
-                .filter(order -> order.getCustomer().getId().equals(userId))
-                .collect(Collectors.toList());
+
+    @Override
+    public Order findById(Long id) {
+        String sql = "SELECT o.id, o.status, o.total_price, u.id as user_id, u.name, u.phone " +
+                "FROM orders o JOIN users u ON o.customer_id = u.id WHERE o.id = ?";
+        return jdbcTemplate.queryForObject(sql, orderRowMapper, id);
     }
+
+    @Override
+    public List<Order> findAll() {
+        String sql = "SELECT o.id, o.status, o.total_price, u.id as user_id, u.name, u.phone " +
+                "FROM orders o JOIN users u ON o.customer_id = u.id";
+        return jdbcTemplate.query(sql, orderRowMapper);
+    }
+
+    @Override
+    public List<Order> findByUserId(Long userId) {
+        String sql = "SELECT o.id, o.status, o.total_price, u.id as user_id, u.name, u.phone " +
+                "FROM orders o JOIN users u ON o.customer_id = u.id WHERE o.customer_id = ?";
+        return jdbcTemplate.query(sql, orderRowMapper, userId);
+    }
+
+    private final RowMapper<Order> orderRowMapper = (rs, rowNum) -> Order.builder()
+            .id(rs.getLong("id"))
+            .customer(User.builder()
+                    .id(rs.getLong("user_id"))
+                    .name(rs.getString("name"))
+                    .phone(rs.getLong("phone"))
+                    .build())
+            .dishes(List.of())
+            .status(OrderStatus.valueOf(rs.getString("status")))
+            .totalPrice(rs.getDouble("total_price"))
+            .build();
 }

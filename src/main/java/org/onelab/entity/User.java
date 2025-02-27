@@ -1,12 +1,12 @@
-package org.onelab.dto;
+package org.onelab.entity;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class DishDto {
+public class User {
     private Long id;
     private String name;
-    private Double price;
+    private Long phone;
 }

@@ -1,11 +1,11 @@
 package org.onelab.repository;
 
-import org.onelab.dto.UserDto;
+import org.onelab.entity.User;
 
 import java.util.List;
 
 public interface UserRepository {
-    void save(UserDto userDto);
-    UserDto findById(Long id);
-    List<UserDto> findAll();
+    void save(User userDto);
+    User findById(Long id);
+    List<User> findAll();
 }

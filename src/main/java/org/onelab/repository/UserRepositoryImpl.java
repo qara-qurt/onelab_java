@@ -1,26 +1,41 @@
 package org.onelab.repository;
 
-import org.onelab.dto.UserDto;
+import org.onelab.entity.User;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
-    private final Map<Long, UserDto> users = new HashMap<>();
+    private final JdbcTemplate jdbcTemplate;
 
-    public void save(UserDto user) {
-        users.put(user.getId(), user);
-    }
-
-    public UserDto findById(Long id) {
-        return users.get(id);
+    public UserRepositoryImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public List<UserDto> findAll() {
-        return users.values().stream().toList();
+    public void save(User user) {
+        String sql = "INSERT INTO users (name, phone) VALUES (?, ?)";
+        jdbcTemplate.update(sql, user.getName(), user.getPhone());
     }
+
+    @Override
+    public User findById(Long id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, userRowMapper, id);
+    }
+
+    @Override
+    public List<User> findAll() {
+        String sql = "SELECT * FROM users";
+        return jdbcTemplate.query(sql, userRowMapper);
+    }
+
+    private final RowMapper<User> userRowMapper = (rs, rowNum) -> User.builder()
+            .id(rs.getLong("id"))
+            .name(rs.getString("name"))
+            .phone(rs.getLong("phone"))
+            .build();
 }

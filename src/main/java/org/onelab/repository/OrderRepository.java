@@ -1,11 +1,12 @@
 package org.onelab.repository;
 
-import org.onelab.dto.OrderDto;
+import org.onelab.entity.Order;
 
 import java.util.List;
 
 public interface OrderRepository {
-    void save(OrderDto orderDto);
-    OrderDto findById(Long id);
-    List<OrderDto> findAll();
+    void save(Order orderDto);
+    Order findById(Long id);
+    List<Order> findAll();
+    List<Order> findByUserId(Long userId);
 }

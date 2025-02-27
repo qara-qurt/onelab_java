@@ -1,26 +1,36 @@
 package org.onelab.repository;
 
-import org.onelab.dto.DishDto;
+import org.onelab.entity.Dish;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public class DishRepositoryImpl implements DishRepository {
-    private final Map<Long, DishDto> dishes = new HashMap<>();
+    private final JdbcTemplate jdbcTemplate;
 
-    public void save(DishDto dish) {
-        dishes.put(dish.getId(), dish);
-    }
-
-    public DishDto findById(Long id) {
-        return dishes.get(id);
+    public DishRepositoryImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public List<DishDto> findAll() {
-        return dishes.values().stream().toList();
+    public void save(Dish dish) {
+        String sql = "INSERT INTO dishes (name, price) VALUES (?, ?)";
+        jdbcTemplate.update(sql, dish.getName(), dish.getPrice());
     }
+
+
+    @Override
+    public List<Dish> findAll() {
+        String sql = "SELECT * FROM dishes";
+        return jdbcTemplate.query(sql, dishRowMapper);
+    }
+
+    private final RowMapper<Dish> dishRowMapper = (rs, rowNum) -> Dish.builder()
+            .id(rs.getLong("id"))
+            .name(rs.getString("name"))
+            .price(rs.getDouble("price"))
+            .build();
 }

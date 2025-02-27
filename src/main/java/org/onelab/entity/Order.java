@@ -1,17 +1,16 @@
-package org.onelab.dto;
+package org.onelab.entity;
 
 import lombok.Builder;
 import lombok.Data;
-import org.onelab.entity.OrderStatus;
 
 import java.util.List;
 
 @Data
 @Builder
-public class OrderDto {
+public class Order {
     private Long id;
-    private UserDto customer;
-    private List<DishDto> dishes;
+    private User customer;
+    private List<Dish> dishes;
     private OrderStatus status;
     private Double totalPrice;
 }
