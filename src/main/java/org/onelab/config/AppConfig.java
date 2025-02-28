@@ -3,16 +3,13 @@ package org.onelab.config;
 import org.onelab.repository.*;
 import org.onelab.service.RestaurantService;;
 import org.onelab.service.RestaurantServiceImpl;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 @ComponentScan(basePackages = "org.onelab")
+@EnableAspectJAutoProxy
 public class AppConfig {
-
 
     @Bean
     @Primary
