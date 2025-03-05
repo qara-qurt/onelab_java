@@ -3,12 +3,15 @@ package org.onelab.service;
 import org.onelab.dto.DishDto;
 import org.onelab.dto.OrderDto;
 import org.onelab.dto.UserDto;
-
+import org.onelab.entity.Dish;
+import org.onelab.entity.Order;
 import org.onelab.entity.User;
 import org.onelab.mapper.EntityDtoMapper;
-import org.onelab.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.onelab.repository.DishRepository;
+import org.onelab.repository.OrderRepository;
+import org.onelab.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,7 +23,6 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final DishRepository dishRepository;
     private final OrderRepository orderRepository;
 
-    @Autowired
     public RestaurantServiceImpl(UserRepository userRepository, DishRepository dishRepository, OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.dishRepository = dishRepository;
@@ -28,17 +30,22 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional
     public void addUser(UserDto userDto) {
-        userRepository.save(EntityDtoMapper.toUser(userDto));
+        User user = EntityDtoMapper.toUser(userDto);
+        userRepository.save(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getUser(Long id) {
-        User user = userRepository.findById(id);
-        return user != null ? EntityDtoMapper.toUserDto(user) : null;
+        return userRepository.findById(id)
+                .map(EntityDtoMapper::toUserDto)
+                .orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserDto> getUsers() {
         return userRepository.findAll().stream()
                 .map(EntityDtoMapper::toUserDto)
@@ -46,21 +53,26 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional
     public void addOrder(OrderDto orderDto) {
         double totalPrice = orderDto.getDishes().stream()
                 .mapToDouble(DishDto::getPrice)
                 .sum();
-
         orderDto.setTotalPrice(totalPrice);
-        orderRepository.save(EntityDtoMapper.toOrder(orderDto));
+
+        Order order = EntityDtoMapper.toOrder(orderDto);
+        orderRepository.save(order);
     }
 
     @Override
+    @Transactional
     public void addDish(DishDto dishDto) {
-        dishRepository.save(EntityDtoMapper.toDish(dishDto));
+        Dish dish = EntityDtoMapper.toDish(dishDto);
+        dishRepository.save(dish);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DishDto> getDishes() {
         return dishRepository.findAll().stream()
                 .map(EntityDtoMapper::toDishDto)
@@ -68,6 +80,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OrderDto> getOrders() {
         return orderRepository.findAll().stream()
                 .map(EntityDtoMapper::toOrderDto)
@@ -75,12 +88,23 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDto getOrder(long orderId) {
-        return EntityDtoMapper.toOrderDto(orderRepository.findById(orderId));
+        return orderRepository.findById(orderId)
+                .map(EntityDtoMapper::toOrderDto)
+                .orElse(null);
     }
 
     @Override
-    public void updateOrder(OrderDto order) {
-        orderRepository.save(EntityDtoMapper.toOrder(order));
+    @Transactional
+    public void updateOrder(OrderDto orderDto) {
+        orderRepository.findById(orderDto.getId()).ifPresent(existingOrder -> {
+            existingOrder.setDishes(orderDto.getDishes().stream()
+                    .map(EntityDtoMapper::toDish)
+                    .collect(Collectors.toList()));
+            existingOrder.setTotalPrice(orderDto.getTotalPrice());
+            existingOrder.setStatus(orderDto.getStatus());
+            orderRepository.save(existingOrder);
+        });
     }
 }

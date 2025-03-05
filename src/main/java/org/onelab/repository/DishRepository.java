@@ -1,10 +1,9 @@
 package org.onelab.repository;
 
 import org.onelab.entity.Dish;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-public interface DishRepository {
-    void save(Dish dishDto);
-     List<Dish> findAll();
+@Repository
+public interface DishRepository extends JpaRepository<Dish,Long> {
 }

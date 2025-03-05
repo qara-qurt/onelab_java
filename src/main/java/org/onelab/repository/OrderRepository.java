@@ -1,12 +1,9 @@
 package org.onelab.repository;
 
 import org.onelab.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-public interface OrderRepository {
-    void save(Order orderDto);
-    Order findById(Long id);
-    List<Order> findAll();
-    List<Order> findByUserId(Long userId);
+@Repository
+public interface OrderRepository extends JpaRepository<Order, Long> {
 }
