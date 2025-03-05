@@ -3,17 +3,18 @@ package org.onelab.service;
 import org.onelab.dto.DishDto;
 import org.onelab.dto.OrderDto;
 import org.onelab.dto.UserDto;
+import org.onelab.entity.User;
 
 import java.util.List;
 
 public interface RestaurantService {
-    void addUser(UserDto userDto);
+    Long addUser(UserDto userDto);
     UserDto getUser(Long id);
     List<UserDto> getUsers();
-    void addOrder(OrderDto orderDto);
-    void addDish(DishDto dishDto);
+    Long addOrder(OrderDto orderDto);
+    Long addDish(DishDto dishDto);
     List<DishDto> getDishes();
     List<OrderDto> getOrders();
     OrderDto getOrder(long orderId);
-    void updateOrder(OrderDto order);
+    OrderDto updateOrder(OrderDto order);
 }

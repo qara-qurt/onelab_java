@@ -1,5 +1,6 @@
 package org.onelab.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.onelab.dto.DishDto;
 import org.onelab.dto.OrderDto;
 import org.onelab.dto.UserDto;
@@ -31,9 +32,9 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
-    public void addUser(UserDto userDto) {
+    public Long addUser(UserDto userDto) {
         User user = EntityDtoMapper.toUser(userDto);
-        userRepository.save(user);
+        return userRepository.save(user).getId();
     }
 
     @Override
@@ -54,21 +55,21 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
-    public void addOrder(OrderDto orderDto) {
+    public Long addOrder(OrderDto orderDto) {
         double totalPrice = orderDto.getDishes().stream()
                 .mapToDouble(DishDto::getPrice)
                 .sum();
         orderDto.setTotalPrice(totalPrice);
 
         Order order = EntityDtoMapper.toOrder(orderDto);
-        orderRepository.save(order);
+        return orderRepository.save(order).getId();
     }
 
     @Override
     @Transactional
-    public void addDish(DishDto dishDto) {
+    public Long addDish(DishDto dishDto) {
         Dish dish = EntityDtoMapper.toDish(dishDto);
-        dishRepository.save(dish);
+        return dishRepository.save(dish).getId();
     }
 
     @Override
@@ -97,14 +98,18 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
-    public void updateOrder(OrderDto orderDto) {
-        orderRepository.findById(orderDto.getId()).ifPresent(existingOrder -> {
-            existingOrder.setDishes(orderDto.getDishes().stream()
-                    .map(EntityDtoMapper::toDish)
-                    .collect(Collectors.toList()));
-            existingOrder.setTotalPrice(orderDto.getTotalPrice());
-            existingOrder.setStatus(orderDto.getStatus());
-            orderRepository.save(existingOrder);
-        });
+    public OrderDto updateOrder(OrderDto orderDto) {
+        Order existingOrder = orderRepository.findById(orderDto.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderDto.getId()));
+
+        existingOrder.setDishes(orderDto.getDishes().stream()
+                .map(EntityDtoMapper::toDish)
+                .collect(Collectors.toList()));
+        existingOrder.setTotalPrice(orderDto.getTotalPrice());
+        existingOrder.setStatus(orderDto.getStatus());
+
+        Order updatedOrder = orderRepository.save(existingOrder);
+        return EntityDtoMapper.toOrderDto(updatedOrder);
     }
+
 }
