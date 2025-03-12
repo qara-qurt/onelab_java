@@ -1,57 +1,79 @@
 package org.onelab.restaurant_service.service;
 
-import lombok.AllArgsConstructor;
-import org.onelab.restaurant_service.entity.Dish;
-import org.onelab.restaurant_service.entity.Order;
-import org.onelab.restaurant_service.entity.OrderStatus;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.onelab.restaurant_service.dto.OrderDto;
+import org.onelab.restaurant_service.entity.*;
 import org.onelab.restaurant_service.exception.NotFoundException;
+import org.onelab.restaurant_service.mapper.OrderMapper;
 import org.onelab.restaurant_service.repository.DishRepository;
-import org.onelab.restaurant_service.repository.MenuRepository;
+import org.onelab.restaurant_service.repository.OrderElasticRepository;
 import org.onelab.restaurant_service.repository.OrderRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
+import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final DishRepository dishRepository;
-    private final MenuRepository menuRepository;
+    private final OrderElasticRepository orderElasticRepository;
 
     @Override
-    public String createOrder(String userId, List<String> dishIDs) {
+    @Transactional
+    public OrderDto createOrder(Long userId, List<Long> dishIds) {
+        List<DishEntity> foundDishes = dishRepository.findAllById(dishIds);
 
-        List<Dish> foundDishes = (List<Dish>) dishRepository.findAllById(dishIDs);
-        if (foundDishes.size() != dishIDs.size()) {
-            List<String> missingDishes = dishIDs.stream()
-                    .filter(id -> foundDishes.stream().noneMatch(dish -> dish.getId().equals(id)))
-                    .toList();
-            throw new NotFoundException("Dishes not found: " + missingDishes);
+        if (foundDishes.size() != dishIds.size()) {
+            throw new NotFoundException("Some dishes not found.");
         }
 
-        boolean dishesExistInMenus = StreamSupport.stream(menuRepository.findAll().spliterator(), false)
-                .filter(menu -> menu.getDishes() != null)
-                .flatMap(menu -> menu.getDishes().stream())
-                .map(Dish::getId)
-                .anyMatch(dishIDs::contains);
+        double totalPrice = foundDishes.stream().mapToDouble(DishEntity::getPrice).sum();
 
-        if (!dishesExistInMenus) {
-            throw new NotFoundException("Chosen dishes are not in any menu.");
-        }
-
-        double totalPrice = foundDishes.stream().mapToDouble(Dish::getPrice).sum();
-
-
-        Order order = Order.builder()
+        OrderEntity order = OrderEntity.builder()
                 .customerId(userId)
                 .dishes(foundDishes)
                 .status(OrderStatus.NEW)
                 .totalPrice(totalPrice)
                 .build();
 
-        return orderRepository.save(order).getId();
+        OrderEntity savedOrder = orderRepository.save(order);
+
+        // Синхронизация в Elasticsearch
+        syncOrderToElastic(savedOrder);
+
+        return OrderMapper.toDto(savedOrder);
+    }
+
+    @Override
+    public OrderDto getOrder(Long id) {
+        OrderEntity order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found."));
+        return OrderMapper.toDto(order);
+    }
+
+    @Override
+    public List<OrderDto> getOrdersByUser(Long userId, int page, int size) {
+        return orderRepository.findByCustomerId(userId, PageRequest.of(page - 1, size))
+                .stream()
+                .map(OrderMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<OrderDto> getOrders(int page, int size) {
+        return orderRepository.findAll(PageRequest.of(page - 1, size))
+                .stream()
+                .map(OrderMapper::toDto)
+                .toList();
+    }
+
+    private void syncOrderToElastic(OrderEntity order) {
+        OrderDocument orderDocument = OrderMapper.toDocument(order);
+        orderElasticRepository.save(orderDocument);
     }
 }

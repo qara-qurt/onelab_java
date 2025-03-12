@@ -11,7 +11,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Dish {
+public class DishDocument {
     @Id
     private String id;
 

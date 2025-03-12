@@ -9,13 +9,14 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Instant;
+import java.util.List;
 
 @Document(indexName = "users")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class UserDocument {
     @Id
     private String id;
 
@@ -37,10 +38,18 @@ public class User {
     @Field(type = FieldType.Double, name = "balance")
     private Double balance;
 
+    @Field(type = FieldType.Keyword, name = "roles")
+    private List<String> roles;
+
     @Field(type = FieldType.Date, name = "created_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Instant createdAt;
+
+    @Field(type = FieldType.Date, name = "updated_at")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private Instant updatedAt;
 
     @Field(type = FieldType.Boolean, name = "is_active")
     private boolean isActive;

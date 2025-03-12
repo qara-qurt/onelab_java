@@ -17,5 +17,4 @@ public class KafkaTopicConfig {
     public NewTopic successPaid() {
         return new NewTopic(KafkaTopics.SUCCESS_PAID, 1, (short) 1);
     }
-
 }

@@ -1,10 +1,13 @@
 package org.onelab.restaurant_service.repository;
 
-import org.onelab.restaurant_service.entity.Menu;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.onelab.restaurant_service.entity.DishEntity;
+import org.onelab.restaurant_service.entity.MenuEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
 
-public interface MenuRepository extends ElasticsearchRepository<Menu, String> {
-    Optional<Menu> findByName(String name);
+@Repository
+public interface MenuRepository extends JpaRepository<MenuEntity, Long> {
+    boolean existsByDishesContaining(DishEntity dish);
+    boolean existsByName(String name);
 }

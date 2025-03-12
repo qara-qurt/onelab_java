@@ -1,96 +1,164 @@
 package org.onelab.restaurant_service.service;
 
-import lombok.AllArgsConstructor;
-import org.onelab.restaurant_service.entity.Dish;
-import org.onelab.restaurant_service.entity.Menu;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.onelab.restaurant_service.dto.DishDto;
+import org.onelab.restaurant_service.dto.MenuDto;
+import org.onelab.restaurant_service.dto.MenuRequestDto;
+import org.onelab.restaurant_service.entity.MenuEntity;
+import org.onelab.restaurant_service.entity.MenuDocument;
+import org.onelab.restaurant_service.entity.DishEntity;
 import org.onelab.restaurant_service.exception.AlreadyExistException;
 import org.onelab.restaurant_service.exception.NotFoundException;
-import org.onelab.restaurant_service.repository.DishRepository;
+import org.onelab.restaurant_service.mapper.MenuMapper;
 import org.onelab.restaurant_service.repository.MenuRepository;
+import org.onelab.restaurant_service.repository.MenuElasticRepository;
+import org.onelab.restaurant_service.repository.DishRepository;
+import org.onelab.restaurant_service.repository.DishElasticRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
 
     private final MenuRepository menuRepository;
+    private final MenuElasticRepository menuElasticRepository;
     private final DishRepository dishRepository;
+    private final DishElasticRepository dishElasticRepository;
 
     @Override
-    public String addMenu(Menu menu) {
-        Optional<Menu> existMenu = menuRepository.findByName(menu.getName());
-        if (existMenu.isPresent()) {
-            throw new AlreadyExistException("Menu with this name " + menu.getName() + " already exist");
+    @Transactional
+    public String createMenu(MenuRequestDto menuRequestDto) {
+        if (menuRepository.existsByName(menuRequestDto.getName())) {
+            throw new AlreadyExistException("Menu with this name already exists.");
         }
-        return menuRepository.save(menu).getId();
+
+        List<DishEntity> dishes = dishRepository.findAllById(menuRequestDto.getDishIds());
+
+        if (dishes.isEmpty()) {
+            throw new NotFoundException("No valid dishes found.");
+        }
+
+        List<DishEntity> uniqueDishes = dishes.stream()
+                .filter(dish -> !menuRepository.existsByDishesContaining(dish))
+                .toList();
+
+        if (uniqueDishes.isEmpty()) {
+            throw new AlreadyExistException("All selected dishes are already in a menu.");
+        }
+
+        MenuEntity menu = MenuEntity.builder()
+                .name(menuRequestDto.getName())
+                .dishes(uniqueDishes)
+                .build();
+
+        MenuEntity savedMenu = menuRepository.save(menu);
+
+        syncMenusToElastic();
+
+        return savedMenu.getId().toString();
     }
 
+
     @Override
-    public void removeMenu(String id) {
-        Optional<Menu> existMenu = menuRepository.findById(id);
-        if (existMenu.isEmpty()) {
-            throw new NotFoundException("Menu with ID '" + id + "' not found.");
+    @Transactional
+    public void removeMenu(Long id) {
+        if (!menuRepository.existsById(id)) {
+            throw new NotFoundException("Menu not found.");
         }
         menuRepository.deleteById(id);
+        menuElasticRepository.deleteById(id.toString());
+
+        syncMenusToElastic();
     }
 
     @Override
-    public void addDishesToMenu(String menuID, List<String> dishIDs) {
-        Optional<Menu> existMenu = menuRepository.findById(menuID);
-        if (existMenu.isEmpty()) {
-            throw new NotFoundException("Menu with ID '" + menuID + "' not found.");
+    @Transactional
+    public void addDishesToMenu(Long menuId, List<Long> dishIds) {
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new NotFoundException("Menu not found."));
+
+        List<DishEntity> dishes = dishRepository.findAllById(dishIds);
+
+        if (dishes.isEmpty()) {
+            throw new NotFoundException("No valid dishes found.");
         }
 
-        Menu menu = existMenu.get();
+        List<Long> existingDishIds = menu.getDishes().stream()
+                .map(DishEntity::getId)
+                .toList();
 
-        List<Dish> foundDishes = (List<Dish>) dishRepository.findAllById(dishIDs);
-
-        if (foundDishes.size() != dishIDs.size()) {
-            throw new NotFoundException("Some dishes were not found.");
-        }
-
-        List<Dish> existingDishes = menu.getDishes();
-        List<Dish> newDishes = foundDishes.stream()
-                .filter(dish -> existingDishes.stream().noneMatch(d -> d.getId().equals(dish.getId())))
+        List<DishEntity> newDishes = dishes.stream()
+                .filter(dish -> !existingDishIds.contains(dish.getId()))
                 .toList();
 
         if (newDishes.isEmpty()) {
-            throw new AlreadyExistException("All dishes already exist in the menu.");
+            throw new AlreadyExistException("All selected dishes are already in the menu.");
         }
 
-        existingDishes.addAll(newDishes);
-        menu.setDishes(existingDishes);
-
+        menu.getDishes().addAll(newDishes);
         menuRepository.save(menu);
+
+        syncMenusToElastic();
     }
 
     @Override
-    public void removeDishesFromMenu(String menuID, List<String> dishIDs) {
-        Optional<Menu> existMenu = menuRepository.findById(menuID);
-        if (existMenu.isEmpty()) {
-            throw new NotFoundException("Menu with ID '" + menuID + "' not found.");
-        }
+    @Transactional
+    public void removeDishesFromMenu(Long menuId, List<Long> dishIds) {
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new NotFoundException("Menu not found."));
 
-        Menu menu = existMenu.get();
-
-        List<Dish> existingDishes = menu.getDishes();
-        if (existingDishes.isEmpty()) {
-            throw new IllegalArgumentException("Menu is empty.");
-        }
-
-        List<Dish> updatedDishes = existingDishes.stream()
-                .filter(dish -> !dishIDs.contains(dish.getId()))
+        List<Long> currentDishIds = menu.getDishes().stream()
+                .map(DishEntity::getId)
                 .toList();
 
-        if (updatedDishes.size() == existingDishes.size()) {
-            throw new IllegalArgumentException("No dishes were removed");
+        List<Long> removableDishes = dishIds.stream()
+                .filter(currentDishIds::contains)
+                .toList();
+
+        if (removableDishes.isEmpty()) {
+            throw new NotFoundException("None of the selected dishes are in the menu.");
         }
 
-        menu.setDishes(updatedDishes);
+        menu.getDishes().removeIf(dish -> removableDishes.contains(dish.getId()));
+
         menuRepository.save(menu);
+
+        syncMenusToElastic();
     }
 
+
+
+    @Override
+    public MenuDto getMenu(Long id) {
+        return menuRepository.findById(id)
+                .map(MenuMapper::toDto)
+                .orElseThrow(() -> new NotFoundException("Menu not found."));
+    }
+
+    @Override
+    public List<MenuDto> getMenus(int page, int size) {
+        return menuRepository.findAll(PageRequest.of(page - 1, size))
+                .stream()
+                .map(MenuMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public void syncMenusToElastic() {
+        List<MenuEntity> menus = menuRepository.findAll();
+
+        List<MenuDocument> menuDocuments = menus.stream()
+                .map(MenuMapper::toDocument)
+                .toList();
+
+        menuElasticRepository.saveAll(menuDocuments);
+        log.info("Menus synchronized to Elasticsearch.");
+    }
 }

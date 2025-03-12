@@ -7,24 +7,18 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.util.List;
 
-@Document(indexName = "orders")
+@Document(indexName = "menu")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Order {
+public class MenuDocument {
     @Id
     private String id;
 
-    @Field(type = FieldType.Keyword, name = "customer_id")
-    private String customerId;
+    @Field(type = FieldType.Text, name = "name", analyzer = "standard")
+    private String name;
 
     @Field(type = FieldType.Nested, name = "dishes")
-    private List<Dish> dishes;
-
-    @Field(type = FieldType.Keyword, name = "status")
-    private OrderStatus status;
-
-    @Field(type = FieldType.Double, name = "total_price")
-    private Double totalPrice;
+    private List<DishDocument> dishes;
 }

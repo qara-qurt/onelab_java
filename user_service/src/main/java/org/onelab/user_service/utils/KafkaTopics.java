@@ -7,7 +7,6 @@ public final class KafkaTopics {
 
     public static final String GROUP_ID = "user-group";
     public static final String USER_FILL_BALANCE = "user.fill_balance";
-    public static final String USER_CREATE = "user.create";
     public static final String WITHDRAW_ORDER = "order.withdraw";
     public static final String FAILED_PAID = "user.payment_failed";
     public static final String SUCCESS_PAID = "user.payment_success";

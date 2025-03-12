@@ -1,7 +1,10 @@
 package org.onelab.gateway_cli_service.shell;
 
 import lombok.RequiredArgsConstructor;
+import org.onelab.gateway_cli_service.dto.DishDto;
+import org.onelab.gateway_cli_service.dto.MenuDto;
 import org.onelab.gateway_cli_service.service.MenuService;
+import org.onelab.gateway_cli_service.service.RestaurantClient;
 import org.onelab.gateway_cli_service.utils.Utils;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -14,6 +17,7 @@ import java.util.List;
 public class MenuCLI {
 
     private final MenuService menuService;
+    private final RestaurantClient restaurantClient;
 
     @ShellMethod(key = "get-menu", value = "Просмотреть меню: get-menu")
     public String getMenu(@ShellOption String id) {
@@ -22,7 +26,10 @@ public class MenuCLI {
 
     @ShellMethod(key = "get-menus", value = "Просмотреть все меню: get-menus")
     public String getMenus(@ShellOption(defaultValue = "1") int page, @ShellOption(defaultValue = "10") int size) {
-        return menuService.getMenus(page, size);
+            List<MenuDto> menus = restaurantClient.getMenus(page, size);
+            return menus.toString();
+
+//        return menuService.getMenus(page, size);
     }
 
     @ShellMethod(key = "add-menu",value = "Добавить меню: add-menu <Название>")
