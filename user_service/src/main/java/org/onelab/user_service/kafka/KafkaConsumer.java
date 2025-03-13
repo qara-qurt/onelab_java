@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.onelab.user_service.entity.UserDocument;
-import org.onelab.user_service.mapper.UserMapper;
 import org.onelab.user_service.service.UserService;
 import org.onelab.user_service.utils.KafkaTopics;
 import org.springframework.kafka.annotation.KafkaListener;

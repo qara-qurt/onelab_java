@@ -16,25 +16,27 @@ public class OrderCLI {
     private final OrderService orderService;
     private final PaymentService paymentService;
 
-    @ShellMethod(key = "create-order", value = "Создать заказ: create-order <customerId> <dishIDs>")
-    public String createOrder(@ShellOption String customerId, @ShellOption List<String> dishIDs) {
-        return orderService.createOrder(customerId, dishIDs);
+    @ShellMethod(key = "create-order", value = "Создать заказ: create-order  <dishIDs>")
+    public String createOrder(@ShellOption Long customerID, @ShellOption List<Long> dishIDs) {
+        return orderService.createOrder(customerID,dishIDs);
     }
 
     @ShellMethod(key = "get-order", value = "Получить заказ по ID: get-order <orderId>")
-    public String getOrder(@ShellOption String orderId) {
+    public String getOrder(@ShellOption Long orderId) {
         return orderService.getOrder(orderId);
-    }
-
-    @ShellMethod(key = "get-orders-by-user", value = "Получить заказы клиента: get-orders-by-user <userId>")
-    public String getOrdersByUser(@ShellOption String userId, @ShellOption(defaultValue = "1") int page, @ShellOption(defaultValue = "10") int size) {
-        return orderService.getOrdersByUser(userId, page, size);
     }
 
     @ShellMethod(key = "get-orders", value = "Получить все заказы: get-orders")
     public String getOrders(@ShellOption(defaultValue = "1") int page, @ShellOption(defaultValue = "10") int size) {
         return orderService.getOrders(page, size);
     }
+
+    @ShellMethod(key = "get-my-orders", value = "Получить мои заказы: get-my-orders")
+    public String getMyOrders(@ShellOption(defaultValue = "1") int page,
+                              @ShellOption(defaultValue = "10") int size) {
+        return orderService.getOrdersByUser(page, size);
+    }
+
 
     @ShellMethod(key = "failed-payments", value = "Посмотреть неудачные платежи")
     public String getFailedPayments() {

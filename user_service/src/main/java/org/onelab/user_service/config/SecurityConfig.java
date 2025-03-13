@@ -3,6 +3,7 @@ package org.onelab.user_service.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,7 +18,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -33,6 +33,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/search").authenticated()
+                        .requestMatchers("/api/users").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
@@ -41,6 +44,8 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -65,3 +70,4 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 }
+

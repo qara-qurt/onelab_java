@@ -57,7 +57,7 @@ public class UserSyncService {
         log.error("Failed to sync users after 3 attempts.");
     }
 
-    private SyncMetadata getSyncMetadata() {
+    public SyncMetadata getSyncMetadata() {
         try {
             return syncMetadataRepository.findByIdWithLock(1L);
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class UserSyncService {
         }
     }
 
-    private void updateSyncMetadata(SyncMetadata syncMetadata) {
+    public void updateSyncMetadata(SyncMetadata syncMetadata) {
         try {
             syncMetadata.setLastSyncTime(Instant.now());
             syncMetadataRepository.saveAndFlush(syncMetadata);

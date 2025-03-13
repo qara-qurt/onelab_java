@@ -60,8 +60,6 @@ public class MenuServiceImpl implements MenuService {
 
         MenuEntity savedMenu = menuRepository.save(menu);
 
-        syncMenusToElastic();
-
         return savedMenu.getId().toString();
     }
 
@@ -74,8 +72,6 @@ public class MenuServiceImpl implements MenuService {
         }
         menuRepository.deleteById(id);
         menuElasticRepository.deleteById(id.toString());
-
-        syncMenusToElastic();
     }
 
     @Override
@@ -104,8 +100,6 @@ public class MenuServiceImpl implements MenuService {
 
         menu.getDishes().addAll(newDishes);
         menuRepository.save(menu);
-
-        syncMenusToElastic();
     }
 
     @Override
@@ -129,8 +123,6 @@ public class MenuServiceImpl implements MenuService {
         menu.getDishes().removeIf(dish -> removableDishes.contains(dish.getId()));
 
         menuRepository.save(menu);
-
-        syncMenusToElastic();
     }
 
 
@@ -150,15 +142,4 @@ public class MenuServiceImpl implements MenuService {
                 .toList();
     }
 
-    @Override
-    public void syncMenusToElastic() {
-        List<MenuEntity> menus = menuRepository.findAll();
-
-        List<MenuDocument> menuDocuments = menus.stream()
-                .map(MenuMapper::toDocument)
-                .toList();
-
-        menuElasticRepository.saveAll(menuDocuments);
-        log.info("Menus synchronized to Elasticsearch.");
-    }
 }

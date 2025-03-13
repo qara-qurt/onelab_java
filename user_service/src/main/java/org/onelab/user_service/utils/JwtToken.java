@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.onelab.user_service.entity.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,7 +32,7 @@ public class JwtToken {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(UserDetails user) {
+    public String generateToken(UserDetails user, Long userId) {
         Map<String, Object> claims = new HashMap<>();
         List<String> roles = user.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -41,7 +40,7 @@ public class JwtToken {
 
         claims.put("roles", roles);
         claims.put("username", user.getUsername());
-
+        claims.put("userId", userId);
         Date issuedAt = new Date();
         Date expirationDate = new Date(issuedAt.getTime() + expiration.toMillis());
 
@@ -53,6 +52,7 @@ public class JwtToken {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public String getUsernameFromToken(String token) {
         return getAllClaimsFromToken(token).get("username", String.class);
@@ -67,7 +67,7 @@ public class JwtToken {
         return (username.equals(user.getUsername())) && !isTokenExpired(token);
     }
 
-    public List<Role> getRolesFromToken(String token) {
+    public List<String> getRolesFromToken(String token) {
         return getAllClaimsFromToken(token).get("roles", List.class);
     }
 

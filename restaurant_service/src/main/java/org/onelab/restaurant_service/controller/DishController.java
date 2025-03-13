@@ -12,9 +12,16 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/dishes")
+@RequestMapping(DishController.BASE_URL)
 @RequiredArgsConstructor
 public class DishController {
+
+    // Base URL
+    public static final String BASE_URL = "api/dishes";
+
+    // Endpoints
+    public static final String BY_ID = "/{id}";
+    public static final String SEARCH = "/search";
 
     private final DishService dishService;
 
@@ -24,7 +31,7 @@ public class DishController {
                 .body(Map.of("id",dishService.save(dish)));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(BY_ID)
     public ResponseEntity<String> removeDish(@PathVariable Long id) {
         dishService.remove(id);
         return ResponseEntity.ok("Dish deleted");
@@ -36,12 +43,12 @@ public class DishController {
         return ResponseEntity.ok(dishService.getDishes(page, size));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(BY_ID)
     public ResponseEntity<DishDto> getDish(@Valid @PathVariable Long id) {
         return ResponseEntity.ok(dishService.getDishById(id));
     }
 
-    @GetMapping("/search")
+    @GetMapping(SEARCH)
     public ResponseEntity<List<DishDto>> searchDishes(@RequestParam String text,
                                                       @RequestParam(defaultValue = "1") int page,
                                                       @RequestParam(defaultValue = "10") int size) {

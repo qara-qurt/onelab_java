@@ -1,88 +1,106 @@
 package org.onelab.gateway_cli_service.service;
 
 import lombok.RequiredArgsConstructor;
-import org.onelab.gateway_cli_service.entity.User;
+import org.onelab.gateway_cli_service.client.TokenStorage;
+import org.onelab.gateway_cli_service.client.UserClient;
+import org.onelab.gateway_cli_service.config.ClientConfig;
+import org.onelab.gateway_cli_service.dto.Role;
+import org.onelab.gateway_cli_service.dto.UserDto;
+import org.onelab.gateway_cli_service.dto.UserLoginDto;
 import org.onelab.gateway_cli_service.kafka.KafkaProducer;
-import org.onelab.gateway_cli_service.repository.UserRepository;
 import org.onelab.gateway_cli_service.utils.Utils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
-    private final KafkaProducer kafkaProducer;
+    private final UserClient userClient;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final TokenStorage tokenStorage;
+    private final KafkaProducer kafkaProducer;
+
 
     @Override
-    public String getUserByID(String id) {
-        System.out.println("🔍 Поиск пользователя с id: " + id);
+    public String login(String username, String password) {
         try {
-            Optional<User> user = userRepository.findById(id.trim());
-            return user.map(Utils::formatUser)
-                    .orElse("❌ Пользователь с ID " + id + " не найден.");
+            UserLoginDto loginRequest = UserLoginDto.builder()
+                    .username(username)
+                    .password(password)
+                    .build();
+
+            Map<String, String> response = userClient.loginUser(loginRequest);
+
+            if (response == null || !response.containsKey("token")) {
+                return "❌ Ошибка авторизации.";
+            }
+
+            String token = response.get("token");
+            ClientConfig.setToken(token);
+            tokenStorage.setToken(token);
+
+            return "✅ Успешный вход. Токен сохранен.";
         } catch (Exception e) {
-            throw new IllegalArgumentException("❌ Ошибка при получении пользователя: " + e.getMessage());
+            return "❌ Ошибка при авторизации: " + e.getMessage();
         }
     }
 
+
     @Override
-    public String createUser(String name, String surname, String username, String phone, String password) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new IllegalArgumentException("❌ Пользователь с именем " + username + " уже существует.");
-        }
-        if(userRepository.findByPhone(phone).isPresent()) {
-            throw new IllegalArgumentException("❌ Пользователь с телефоном " + phone + " уже существует.");
-        }
+    public String getUserByID(Long id) {
+        UserDto user = userClient.getUserById(id);
+        return Utils.formatUser(user);
+    }
 
-        String hashedPassword = passwordEncoder.encode(password);
+    @Override
+    public String createUser(String name, String surname, String username, String phone, String password, List<Role> roles) {
+        String validationError = Utils.validateUserInput(name, surname, username, phone, password);
+        if (validationError != null) return validationError;
 
-        User user =  User.builder()
+        UserDto userDto = UserDto.builder()
                 .name(name)
                 .surname(surname)
                 .username(username)
                 .phone(phone)
-                .password(hashedPassword)
+                .password(password)
+                .roles(roles)
                 .isActive(true)
                 .balance(0.0)
-                .createdAt(Instant.now())
                 .build();
 
-        kafkaProducer.sendUser(user);
-        return ("🔧 Создание пользователя: " + name + " " + surname);
+        try {
+            UserDto createdUser = userClient.registerUser(userDto);
+            return "✅ Пользователь " + createdUser.getUsername() + " зарегистрирован. ID: " + createdUser.getId();
+        } catch (Exception e) {
+            return "❌ Ошибка при создании пользователя: " + e.getMessage();
+        }
     }
+
 
     @Override
     public String searchUsers(String name, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<User> userPage = userRepository.searchByFields(name, pageable);
-        List<User> users = userPage.getContent();
+        List<UserDto> users = userClient.getAllUsers(page, size);
+        List<UserDto> filteredUsers = users.stream()
+                .filter(user -> user.getName().toLowerCase().contains(name.toLowerCase()))
+                .toList();
 
-        if (users.isEmpty()) {
-            return "❌ Пользователь с именем '" + name + "' не найден.";
-        }
+       if (filteredUsers.isEmpty()) {
+           return "❌ Пользователь с именем '" + name + "' не найден.";
+       }
 
-        return users.stream()
-                .map(Utils::formatUser)
+       return filteredUsers.stream()
+               .map(Utils::formatUser)
                 .collect(Collectors.joining("\n"));
     }
 
     @Override
     public String getUsers(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-
-        Page<User> users = userRepository.findAllUsers(pageable);
-
+        List<UserDto> users = userClient.getAllUsers(page, size);
         if (users.isEmpty()) {
             return "❌ Пользователи не найдены.";
         }
@@ -93,23 +111,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String removeUser(String id) {
-        Optional<User> user = userRepository.findById(id.trim());
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("❌ Пользователь с ID " + id + " не найден.");
+    public String removeUser(Long id) {
+        try {
+            userClient.deleteUser(id);
+            return "🗑 Пользователь с ID " + id + " удален.";
+        } catch (Exception e) {
+            return "❌ Ошибка при удалении пользователя: " + e.getMessage();
         }
-        userRepository.deleteById(id.trim());
-        return "🗑 Пользователь с ID " + id + " удален.";
     }
 
     @Override
-    public String fillBalance(String userId, double amount) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("❌ Пользователь с ID " + userId + " не найден.");
-        }
-
-        kafkaProducer.fillBalance(userId, amount);
-        return "✅ Баланс пользователя " + userId + " пополнится " + amount + " kz.";
+    public String fillBalance(Long userId, double amount) {
+        kafkaProducer.fillBalance(userId,amount);
+        return "Запрос обрабатвается";
     }
 }

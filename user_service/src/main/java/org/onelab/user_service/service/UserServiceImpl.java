@@ -1,11 +1,9 @@
 package org.onelab.user_service.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.onelab.user_service.dto.UserDto;
 import org.onelab.user_service.dto.UserLoginDto;
-import org.onelab.user_service.entity.Role;
 import org.onelab.user_service.entity.UserDocument;
 import org.onelab.user_service.entity.UserEntity;
 import org.onelab.user_service.exception.AlreadyExistException;
@@ -19,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,19 +51,23 @@ public class UserServiceImpl implements UserService {
         userDto.setBalance(0.0);
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         userDto.setActive(true);
-        userDto.setRoles(List.of(Role.USER));
 
         UserEntity userEntity = userRepository.save(UserMapper.toEntity(userDto));
         return userEntity.getId();
     }
 
     public String login(UserLoginDto request) {
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        UserEntity user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        // Проверяем, совпадает ли введенный пароль с хранимым
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Incorrect username or password");
+        }
 
         UserDetails userDetails = User.builder()
                 .username(user.getUsername())
@@ -72,7 +75,7 @@ public class UserServiceImpl implements UserService {
                 .roles(user.getRoles().stream().map(Enum::name).toArray(String[]::new))
                 .build();
 
-        return jwtToken.generateToken(userDetails);
+        return jwtToken.generateToken(userDetails, user.getId());
     }
 
     @Override

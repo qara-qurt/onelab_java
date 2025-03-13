@@ -1,13 +1,9 @@
 package org.onelab.gateway_cli_service.utils;
 
-import org.onelab.gateway_cli_service.entity.Dish;
-import org.onelab.gateway_cli_service.entity.Menu;
-import org.onelab.gateway_cli_service.entity.Order;
-import org.onelab.gateway_cli_service.entity.User;
+import org.onelab.gateway_cli_service.dto.*;
 
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class Utils {
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Zа-яА-Я0-9\\s-]{2,50}$");
@@ -16,14 +12,11 @@ public class Utils {
         throw new UnsupportedOperationException("Utility class should not be instantiated.");
     }
 
-    public static String formatUser(User user) {
+    public static String formatUser(UserDto user) {
         return """
-               👤 Пользователь: %s %s
-               👤 Username: %s
-               📌 ID: %s
-               📱 Телефон: %s
-               💰 Баланс: %.2f kz
-               🔒 Активен: %s
+               👤 %s %s (@%s)
+               📌 ID: %d | 📱 %s
+               💰 Баланс: %.2f KZT | 🔒 Активен: %s
                """.formatted(
                 user.getName(),
                 user.getSurname(),
@@ -31,16 +24,15 @@ public class Utils {
                 user.getId(),
                 user.getPhone(),
                 user.getBalance(),
-                user.isActive() ? "Да" : "Нет"
+                user.isActive() ? "✅ Да" : "❌ Нет"
         );
     }
 
-    public static String formatDish(Dish dish) {
+    public static String formatDish(DishDto dish) {
         return """
-               🍽️ Блюдо: %s
-               📌 ID: %s
-               💰 Цена: %.2f kz
-               📝 Описание: %s
+               🍽️ %s | 📌 ID: %d
+               💰 Цена: %.2f KZT
+               📝 %s
                """.formatted(
                 dish.getName(),
                 dish.getId(),
@@ -49,67 +41,61 @@ public class Utils {
         );
     }
 
-    public static String formatMenu(Menu menu) {
+    public static String formatMenu(MenuDto menu) {
+        String dishesList = menu.getDishes().isEmpty() ? "📭 Нет блюд." :
+                menu.getDishes().stream()
+                        .map(DishDto::getName)
+                        .toList()
+                        .toString();
+
         return """
-               🍽️ Меню: %s
-               📌 ID: %s
-               """.formatted(
-                menu.getName(),
-                menu.getId()
-        );
+               📜 Меню: %s | 📌 ID: %d
+               🍽 Блюда: %s
+               """.formatted(menu.getName(), menu.getId(), dishesList);
     }
 
-    public static String formatOrder(Order order) {
-        String dishes = order.getDishes().stream()
-                .map(Dish::getName)
-                .collect(Collectors.joining(", "));
+    public static String formatOrder(OrderDto order) {
+        String dishes = String.join(", ", order.getDishes().stream().map(DishDto::getName).toList());
 
-        return "📦 Заказ ID: " + order.getId() + "\n" +
-                "👤 Клиент: " + order.getCustomerId() + "\n" +
-                "🍽️ Блюда: [" + dishes + "]\n" +
-                "💰 Цена: " + order.getTotalPrice() + " KZT\n" +
-                "📌 Статус: " + order.getStatus();
+        return """
+               📦 Заказ #%d | 👤 Клиент: %d
+               🍽 %s
+               💰 %.2f KZT | 📌 Статус: %s
+               """.formatted(order.getId(), order.getCustomerId(), dishes, order.getTotalPrice(), order.getStatus());
     }
 
     public static String validateUserInput(String name, String surname, String username, String phone, String password) {
-        if (name == null || name.trim().isEmpty()) {
-            return "❌ Ошибка: Имя не может быть пустым.";
-        }
-        if (surname == null || surname.trim().isEmpty()) {
-            return "❌ Ошибка: Фамилия не может быть пустой.";
-        }
-        if (username == null || username.trim().isEmpty()) {
-            return "❌ Ошибка: Логин не может быть пустым.";
-        }
-        if (!phone.matches("^\\+[0-9]{10,15}$")) {
-            return "❌ Ошибка: Некорректный номер телефона. Должен начинаться с + и содержать 10-15 цифр.";
-        }
-        if (password == null || password.length() < 6) {
-            return "❌ Ошибка: Пароль должен быть не менее 6 символов.";
-        }
-        return null;
+        StringBuilder errors = new StringBuilder();
+
+        if (name == null || name.trim().isEmpty()) errors.append("❌ Имя не может быть пустым.\n");
+        if (surname == null || surname.trim().isEmpty()) errors.append("❌ Фамилия не может быть пустой.\n");
+        if (username == null || username.trim().isEmpty()) errors.append("❌ Логин не может быть пустым.\n");
+        if (phone == null || !phone.matches("^\\+[0-9]{10,15}$"))
+            errors.append("❌ Некорректный номер телефона.\n");
+        if (password == null || password.length() < 6)
+            errors.append("❌ Пароль должен быть не менее 6 символов.\n");
+
+        return errors.isEmpty() ? null : errors.toString();
     }
 
     public static String validateDish(String name, String description, double price) {
-        if (name == null || name.trim().isEmpty()) {
-            return "❌ Название блюда не может быть пустым.";
-        }
-        if (description == null || description.trim().isEmpty()) {
-            return "❌ Описание блюда не может быть пустым.";
-        }
-        if (price <= 0) {
-            return "❌ Цена блюда должна быть больше 0.";
-        }
-        return null;
+        StringBuilder errors = new StringBuilder();
+
+        if (name == null || name.trim().isEmpty()) errors.append("❌ Название блюда не может быть пустым.\n");
+        if (description == null || description.trim().isEmpty()) errors.append("❌ Описание не может быть пустым.\n");
+        if (price <= 0) errors.append("❌ Цена должна быть больше 0.\n");
+
+        return errors.isEmpty() ? null : errors.toString();
     }
 
-    public static String validateMenuInput(String name, List<String> dishIDs) {
-        if (name == null || !NAME_PATTERN.matcher(name).matches()) {
-            return "❌ Ошибка: Некорректное название меню!";
-        }
-        if (dishIDs == null || dishIDs.isEmpty()) {
-            return "❌ Ошибка: Меню должно содержать хотя бы одно блюдо.";
-        }
-        return null;
+    public static String validateMenuInput(String name, List<Long> dishIDs) {
+        StringBuilder errors = new StringBuilder();
+
+        if (name == null || !NAME_PATTERN.matcher(name).matches())
+            errors.append("❌ Ошибка: Некорректное название меню!\n");
+        if (dishIDs == null || dishIDs.isEmpty())
+            errors.append("❌ Меню должно содержать хотя бы одно блюдо.\n");
+
+        return errors.isEmpty() ? null : errors.toString();
     }
 }

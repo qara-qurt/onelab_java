@@ -65,6 +65,144 @@ java -jar gateway_cli_service.jar
 ### 🔍 Поиск
 - `search-orders <Статус> <page> <size>` → Найти заказы по статусу (пример: `search-orders NEW 1 10`)
 
+## 🔄 REST API
+- Роли:
+- `ADMIN `
+- `USER` 
+- `MANAGER`
+
+```  
+curl -X POST "http://localhost:8081/api/users/register" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "Dias",
+           "surname": "User",
+           "username": "dias_user",
+           "phone": "+77771112233",
+           "password": "securepassword",
+           "roles": ["ADMIN"]
+         }'
+```
+
+```
+curl -X POST "http://localhost:8081/api/users/login" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "username": "dias_user",
+           "password": "securepassword"
+         }'
+
+```
+
+
+```
+curl -X GET "http://localhost:8081/api/users/1" \
+     -H "Authorization: Bearer <token>"
+```
+
+```
+curl -X POST "http://localhost:8081/api/users/1/fill-balance" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{"amount": 100.0}'
+
+```
+
+```
+curl -X DELETE "http://localhost:8081/api/users/1" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X POST "http://localhost:8083/api/dishes" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{
+           "name": "Pizza Margherita",
+           "price": 10.99,
+           "description": "Classic Italian pizza with tomatoes and mozzarella"
+         }'
+
+```
+
+```
+curl -X DELETE "http://localhost:8083/api/dishes/1" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X GET "http://localhost:8083/api/dishes?page=1&size=10" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X GET "http://localhost:8083/api/dishes/1" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X GET "http://localhost:8083/api/dishes/search?text=Pizza&page=1&size=10" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X POST "http://localhost:8083/api/menus" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{
+           "name": "Lunch Menu",
+           "dishIds": [1, 2, 3]
+         }'
+
+```
+
+```
+curl -X DELETE "http://localhost:8083/api/menus/1" \
+     -H "Authorization: Bearer <token>"
+```
+
+```
+curl -X GET "http://localhost:8083/api/menus/1" \
+     -H "Authorization: Bearer <token>"
+```
+
+```
+curl -X GET "http://localhost:8083/api/menus?page=1&size=10" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X POST "http://localhost:8083/api/orders" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{
+           "customerId": 1,
+           "dishIds": [1, 2, 3]
+         }'
+
+```
+
+```
+curl -X GET "http://localhost:8083/api/orders/1" \
+     -H "Authorization: Bearer <token>"
+
+```
+
+```
+curl -X GET "http://localhost:8083/api/orders/user/1?page=1&size=10" \
+     -H "Authorization: Bearer <token>"
+```
+
+```
+curl -X GET "http://localhost:8083/api/orders?page=1&size=10" \
+     -H "Authorization: Bearer <token>"
+```
 ## 🔄 Kafka Debugging
 
 ### 📋 Список топиков

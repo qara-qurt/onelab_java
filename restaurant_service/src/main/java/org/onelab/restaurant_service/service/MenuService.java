@@ -12,5 +12,4 @@ public interface MenuService {
     void removeDishesFromMenu(Long menuId, List<Long> dishIds);
     MenuDto getMenu(Long id);
     List<MenuDto> getMenus(int page, int size);
-    void syncMenusToElastic();
 }

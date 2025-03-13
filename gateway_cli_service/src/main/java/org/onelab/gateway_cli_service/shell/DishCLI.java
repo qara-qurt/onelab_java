@@ -29,7 +29,7 @@ public class DishCLI {
     }
 
     @ShellMethod(key = "remove-dish",value = "Удалить блюдо: remove-dish <ID>")
-    public String removeFromDish(@ShellOption String id) {
+    public String removeFromDish(@ShellOption Long id) {
         return dishService.removeDish(id);
     }
 

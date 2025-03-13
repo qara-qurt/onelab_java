@@ -5,15 +5,24 @@ import lombok.RequiredArgsConstructor;
 import org.onelab.restaurant_service.dto.OrderDto;
 import org.onelab.restaurant_service.dto.OrderRequestDto;
 import org.onelab.restaurant_service.service.OrderService;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping(OrderController.BASE_URL)
 @RequiredArgsConstructor
 public class OrderController {
+
+    // Base URL
+    public static final String BASE_URL = "api/orders";
+
+    // Endpoints
+    public static final String BY_ID = "/{id}";
+    public static final String ORDER_BY_USER = "/user/{userId}";
+
 
     private final OrderService orderService;
 
@@ -22,12 +31,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.createOrder(orderRequest.getCustomerId(), orderRequest.getDishIds()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(BY_ID)
     public ResponseEntity<OrderDto> getOrder(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrder(id));
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping(ORDER_BY_USER)
     public ResponseEntity<List<OrderDto>> getOrdersByUser(@PathVariable Long userId,
                                                           @RequestParam(defaultValue = "1") int page,
                                                           @RequestParam(defaultValue = "10") int size) {

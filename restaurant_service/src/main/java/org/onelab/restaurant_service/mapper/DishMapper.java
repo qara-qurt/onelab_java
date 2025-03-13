@@ -12,6 +12,8 @@ public class DishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .description(dish.getDescription())
+                .createdAt(dish.getCreatedAt())
+                .updatedAt(dish.getUpdatedAt())
                 .build();
     }
 
@@ -21,6 +23,8 @@ public class DishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .description(dish.getDescription())
+                .createdAt(dish.getCreatedAt())
+                .updatedAt(dish.getUpdatedAt())
                 .build();
     }
 
@@ -30,6 +34,8 @@ public class DishMapper {
                 .name(dto.getName())
                 .price(dto.getPrice())
                 .description(dto.getDescription())
+                .createdAt(dto.getCreatedAt())
+                .updatedAt(dto.getUpdatedAt())
                 .build();
     }
 
@@ -39,6 +45,8 @@ public class DishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .description(dish.getDescription())
+                .createdAt(dish.getCreatedAt())
+                .updatedAt(dish.getUpdatedAt())
                 .build();
     }
 }

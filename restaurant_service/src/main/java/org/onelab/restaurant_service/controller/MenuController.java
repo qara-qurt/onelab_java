@@ -12,9 +12,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/menus")
+@RequestMapping(MenuController.BASE_URL)
 @RequiredArgsConstructor
 public class MenuController {
+
+    // Base URL
+    public static final String BASE_URL = "api/menus";
+
+    // Endpoints
+    public static final String BY_ID = "/{id}";
+    public static final String MENU_DISHES = "/{menuId}/dishes";
+
 
     private final MenuService menuService;
 
@@ -24,25 +32,25 @@ public class MenuController {
         return ResponseEntity.status(HttpStatus.CREATED).body(menuId);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(BY_ID)
     public ResponseEntity<Void> removeMenu(@PathVariable Long id) {
         menuService.removeMenu(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{menuId}/dishes")
+    @PostMapping(MENU_DISHES)
     public ResponseEntity<String> addDishesToMenu(@PathVariable Long menuId, @RequestBody List<Long> dishIds) {
         menuService.addDishesToMenu(menuId, dishIds);
         return ResponseEntity.ok("Dishes added to menu");
     }
 
-    @DeleteMapping("/{menuId}/dishes")
+    @DeleteMapping(MENU_DISHES)
     public ResponseEntity<String> removeDishesFromMenu(@PathVariable Long menuId, @RequestBody List<Long> dishIds) {
         menuService.removeDishesFromMenu(menuId, dishIds);
         return ResponseEntity.ok("Dishes removed from menu");
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(BY_ID)
     public ResponseEntity<MenuDto> getMenu(@PathVariable Long id) {
         return ResponseEntity.ok(menuService.getMenu(id));
     }

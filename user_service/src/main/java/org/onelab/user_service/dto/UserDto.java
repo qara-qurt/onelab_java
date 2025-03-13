@@ -36,6 +36,8 @@ public class UserDto {
 
     private Double balance;
 
+    @NotNull(message = "Roles are required")
+    @Size(min = 1, message = "User must have at least one role")
     List<Role> roles;
 
     private Instant createdAt;

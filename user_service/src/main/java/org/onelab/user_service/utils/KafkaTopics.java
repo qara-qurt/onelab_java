@@ -10,4 +10,5 @@ public final class KafkaTopics {
     public static final String WITHDRAW_ORDER = "order.withdraw";
     public static final String FAILED_PAID = "user.payment_failed";
     public static final String SUCCESS_PAID = "user.payment_success";
+    public static final String SUCCESS_FILL_BALANCE = "user.success_fill_balance";
 }

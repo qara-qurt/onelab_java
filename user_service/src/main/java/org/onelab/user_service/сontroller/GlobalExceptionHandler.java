@@ -1,6 +1,5 @@
 package org.onelab.user_service.сontroller;
 
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.onelab.user_service.exception.AlreadyExistException;
 import org.onelab.user_service.exception.NotFoundException;
@@ -21,14 +20,12 @@ public class GlobalExceptionHandler {
     // Handling Valid errors
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        // get only messages from errors
         List<String> messages = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(FieldError::getDefaultMessage)
                 .toList();
 
-        // response message
         Map<String, Object> response = Map.of(
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.BAD_REQUEST.value(),

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.time.Instant;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -22,4 +24,8 @@ public class DishDto {
 
     @NotBlank(message = "Description cannot be empty")
     private String description;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 }
