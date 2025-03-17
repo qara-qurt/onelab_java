@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.onelab.user_service.dto.UserDto;
 import org.onelab.user_service.dto.UserLoginDto;
 import org.onelab.user_service.service.UserService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +28,11 @@ public class UserController {
     public static final String USER_BY_ID = "/{id}";
     public static final String SEARCH = "/search";
     public static final String FILL_BALANCE = "{id}/fill-balance";
+    public static final String FILTER_BALANCE_ELASTIC = "/filter/balance/elastic";
+    public static final String FILTER_BALANCE_STREAM = "/filter/balance/stream";
+    public static final String FILTER_BIRTH_YEAR = "/filter/birth-year";
+    public static final String COMPARE = "/compare-streams";
+
 
 
     private final UserService userService;
@@ -76,4 +83,40 @@ public class UserController {
         userService.fillBalance(id, amount);
         return ResponseEntity.ok(Map.of("message", "User successfully filled"));
     }
+
+    @GetMapping(FILTER_BALANCE_STREAM)
+    public ResponseEntity<List<UserDto>> filterUsersByBalanceStream(@RequestParam(required = false) Double minBalance,
+                                                              @RequestParam(required = false) Double maxBalance,
+                                                              @RequestParam(defaultValue = "1") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(userService.filterStreamUsers(minBalance,maxBalance, page, size));
+    }
+
+    @GetMapping(FILTER_BALANCE_ELASTIC)
+    public ResponseEntity<List<UserDto>> filterUsersByBalanceElastic(@RequestParam(required = false) Double minBalance,
+                                                              @RequestParam(required = false) Double maxBalance,
+                                                              @RequestParam(defaultValue = "1") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(userService.filterElasticUsers(minBalance,maxBalance, page, size));
+    }
+
+    @GetMapping(FILTER_BIRTH_YEAR)
+    public ResponseEntity<List<UserDto>> filterByBirthDateElasticsearch(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "birthDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortOrder,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(userService.filterBirthDate(startDate, endDate, page, size, sortBy,sortOrder));
+    }
+
+    @GetMapping(COMPARE)
+    public ResponseEntity<Map<String, Long>> compareStreamPerformance() {
+        Map<String, Long> result = userService.compareStreamPerformance();
+        return ResponseEntity.ok(result);
+    }
+
+
 }

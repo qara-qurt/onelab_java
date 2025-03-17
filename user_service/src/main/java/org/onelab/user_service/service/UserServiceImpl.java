@@ -15,6 +15,7 @@ import org.onelab.user_service.repository.UserRepository;
 import org.onelab.user_service.utils.JwtToken;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,8 +25,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -64,7 +68,6 @@ public class UserServiceImpl implements UserService {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // Проверяем, совпадает ли введенный пароль с хранимым
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Incorrect username or password");
         }
@@ -130,6 +133,84 @@ public class UserServiceImpl implements UserService {
         existingUser.get().setActive(false);
         userRepository.save(existingUser.get());
         return "User successfully deleted";
+    }
+
+    @Override
+    public Map<String, Long> compareStreamPerformance() {
+        List<UserDto> users = userRepository.findAll().stream()
+                .map(UserMapper::toDto)
+                .toList();
+
+        Instant startSequential = Instant.now();
+        double totalBalanceSequential = users.stream()
+                .map(UserDto::getBalance)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .reduce(0.0, Double::sum);
+        Instant endSequential = Instant.now();
+
+        Instant startParallel = Instant.now();
+        double totalBalanceParallel = users.parallelStream()
+                .map(UserDto::getBalance)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .reduce(0.0, Double::sum);
+        Instant endParallel = Instant.now();
+
+        long sequentialTime = Duration.between(startSequential, endSequential).toMillis();
+        long parallelTime = Duration.between(startParallel, endParallel).toMillis();
+
+        log.info("Sequential Stream Time: {} ms, Total Balance: {}", sequentialTime, totalBalanceSequential);
+        log.info("Parallel Stream Time: {} ms, Total Balance: {}", parallelTime, totalBalanceParallel);
+
+
+        return Map.of(
+                "Sequential Time (ms)", sequentialTime,
+                "Total Balance Sequential", (long) totalBalanceSequential,
+                "Parallel Time (ms)", parallelTime,
+                "Total Balance Parallel", (long) totalBalanceParallel
+        );
+    }
+
+
+    @Override
+    public List<UserDto> filterStreamUsers(Double minBalance, Double maxBalance, int page, int size) {
+        double min = (minBalance == null) ? 0.0 : minBalance;
+        double max = (maxBalance == null) ? Double.MAX_VALUE : maxBalance;
+
+        List<UserDto> users = userRepository.findAll().stream()
+                .filter(user -> user.getBalance() >= min && user.getBalance() <= max)
+                .sorted(Comparator.comparing(UserEntity::getBalance))
+                .map(UserMapper::toDto)
+                .collect(Collectors.toList());
+
+        Optional<Double> totalSum = users.stream().map(UserDto::getBalance).reduce(Double::sum);
+        totalSum.ifPresent(aDouble -> log.info("Total sum of users balance: {}", aDouble));
+
+        return users;
+    }
+
+    @Override
+    public List<UserDto> filterElasticUsers(Double minBalance, Double maxBalance, int page, int size) {
+        double min = (minBalance == null) ? 0.0 : minBalance;
+        double max = (maxBalance == null) ? Double.MAX_VALUE : maxBalance;
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("balance").ascending());
+
+        return userElasticRepository.findByBalanceBetween(min, max, pageable)
+                .map(UserMapper::toDto).stream().collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDto> filterBirthDate(LocalDate startDate, LocalDate endDate, int page, int size, String sortBy, String sortOrder) {
+        String start = (startDate == null) ? "1900-01-01" : startDate.toString();
+        String end = (endDate == null) ? LocalDate.now().toString() : endDate.toString();
+
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
+
+        return userElasticRepository.findByBirthDateBetween(start, end, pageable)
+                    .map(UserMapper::toDto).stream().collect(Collectors.toList());
     }
 
 }

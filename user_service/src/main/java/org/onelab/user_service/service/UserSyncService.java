@@ -10,6 +10,7 @@ import org.onelab.user_service.repository.SyncMetadataRepository;
 import org.onelab.user_service.repository.UserElasticRepository;
 import org.onelab.user_service.repository.UserRepository;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

@@ -5,6 +5,7 @@ import lombok.*;
 import org.onelab.user_service.entity.Role;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -43,6 +44,8 @@ public class UserDto {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    private LocalDate birthDate;
 
     private boolean isActive;
 }

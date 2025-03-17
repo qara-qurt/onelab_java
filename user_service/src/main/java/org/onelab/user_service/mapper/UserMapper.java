@@ -5,6 +5,7 @@ import org.onelab.user_service.entity.Role;
 import org.onelab.user_service.entity.UserDocument;
 import org.onelab.user_service.entity.UserEntity;
 
+import java.time.ZoneId;
 import java.util.Collections;
 
 public class UserMapper {
@@ -19,6 +20,7 @@ public class UserMapper {
                 .roles(entity.getRoles())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .birthDate(entity.getBirthDate())
                 .isActive(entity.isActive())
                 .build();
     }
@@ -35,6 +37,7 @@ public class UserMapper {
                         ? document.getRoles().stream().map(Role::valueOf).toList()
                         : Collections.emptyList()
                 )
+                .birthDate(document.getBirthDate())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
                 .isActive(document.isActive())
@@ -54,6 +57,7 @@ public class UserMapper {
                 .isActive(dto.isActive())
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
+                .birthDate(dto.getBirthDate())
                 .build();
     }
 
@@ -70,6 +74,7 @@ public class UserMapper {
                 entity.getRoles().stream().map(Enum::name).toList(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
+                entity.getBirthDate(),
                 entity.isActive()
         );
     }

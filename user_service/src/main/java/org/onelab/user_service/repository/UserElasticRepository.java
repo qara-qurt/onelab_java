@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
+import java.util.List;
+
 public interface UserElasticRepository extends ElasticsearchRepository<UserDocument, String> {
     @Query("""
         {
@@ -24,4 +26,29 @@ public interface UserElasticRepository extends ElasticsearchRepository<UserDocum
         }
         """)
     Page<UserDocument> searchByFields(String name, Pageable pageable);
+
+    @Query("""
+        {
+          "range": {
+            "balance": {
+              "gte": "?0",
+              "lte": "?1"
+            }
+          }
+        }
+        """)
+    Page<UserDocument> findByBalanceBetween(Double minBalance, Double maxBalance, Pageable pageable);
+
+    @Query("""
+        {
+          "range": {
+            "birth_date": {
+              "gte": "?0",
+              "lte": "?1",
+              "format": "yyyy-MM-dd"
+            }
+          }
+        }
+        """)
+    Page<UserDocument> findByBirthDateBetween(String startDate, String endDate, Pageable pageable);
 }

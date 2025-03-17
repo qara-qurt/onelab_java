@@ -9,6 +9,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Document(indexName = "users")
@@ -50,6 +51,11 @@ public class UserDocument {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Instant updatedAt;
+
+    @Field(type = FieldType.Date, name = "birth_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDate birthDate;
 
     @Field(type = FieldType.Boolean, name = "is_active")
     private boolean isActive;
