@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    banner-mode: console
+  shell:
+    interactive:
+      enabled: true
+      script.enabled: true
+
+  elasticsearch:
+    uris: http://elasticsearch:9200
+    username: elastic
+    password: gempluspwd
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/restaurant
+    username: dias
+    password: qaraqurt
+    driver-class-name: org.postgresql.Driver
+
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME}
+
+jwt:
+  secret: 5eCR3tK3y5eCR3tK3y5eCR3tK3y5eCR3tK3y
+  expiration: 3h
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
