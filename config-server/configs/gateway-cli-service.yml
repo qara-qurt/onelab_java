@@ -1,6 +1,0 @@
-spring:
-  application:
-    name: gateway-cli-service
-
-server:
-  port: 8085

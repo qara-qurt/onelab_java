@@ -17,8 +17,8 @@ docker-compose up -d
 
 ### 🔧 Запуск внутри контейнера
 ```sh
-docker exec -it onelab_java-gateway_cli_service-1 sh
-java -jar gateway_cli_service.jar
+docker ps
+docker attach onelab_java-gateway_cli_service-1
 ```
 
 Если `Spring Shell` включен, ты попадешь в интерактивный режим командной строки CLI.

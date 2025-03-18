@@ -11,4 +11,3 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar gateway_cli_service.jar
 ENTRYPOINT ["sh", "-c", "java -jar /app/gateway_cli_service.jar && sh"]
-
