@@ -25,13 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtToken jwtToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,7 +40,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("❌ Token is missing in request");
             sendUnauthorizedResponse(response, "Unauthorized: Token is missing.");
             return;
         }
@@ -52,10 +51,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             String username = claims.getSubject();
             List<String> roles = jwtToken.getRolesFromToken(token);
 
-            log.info("✅ Token decoded. User: {}, Roles: {}", username, roles);
 
             if (roles == null || roles.isEmpty()) {
-                log.error("⚠️ Token does not contain roles!");
                 sendUnauthorizedResponse(response, "Unauthorized: No roles found.");
                 return;
             }
@@ -75,7 +72,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception e) {
-            log.error("❌ Invalid token: {}", e.getMessage());
             sendUnauthorizedResponse(response, "Unauthorized: Invalid token.");
             return;
         }

@@ -6,5 +6,8 @@ public final class KafkaTopics {
     }
 
     public static final String GROUP_ID = "restaurant-group";
+
     public static final String WITHDRAW_ORDER = "order.withdraw";
+    public static final String FAILED_PAID = "user.payment_failed";
+    public static final String SUCCESS_PAID = "user.payment_success";
 }

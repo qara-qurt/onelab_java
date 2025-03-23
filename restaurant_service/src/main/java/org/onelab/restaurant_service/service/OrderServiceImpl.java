@@ -42,7 +42,6 @@ public class OrderServiceImpl implements OrderService {
 
         OrderEntity savedOrder = orderRepository.save(order);
 
-        // Синхронизация в Elasticsearch
         syncOrderToElastic(savedOrder);
 
         return OrderMapper.toDto(savedOrder);
@@ -69,6 +68,19 @@ public class OrderServiceImpl implements OrderService {
                 .stream()
                 .map(OrderMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    public OrderDto updateOrder(OrderDto orderDto) {
+        OrderEntity order = orderRepository.findById(orderDto.getId())
+                .orElseThrow(() -> new NotFoundException("Order not found."));
+
+        order.setStatus(orderDto.getStatus());
+        OrderEntity updatedOrder = orderRepository.save(order);
+
+        syncOrderToElastic(updatedOrder);
+
+        return OrderMapper.toDto(updatedOrder);
     }
 
     private void syncOrderToElastic(OrderEntity order) {

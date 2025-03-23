@@ -9,4 +9,5 @@ public interface OrderService {
     OrderDto getOrder(Long id);
     List<OrderDto> getOrdersByUser(Long userId, int page, int size);
     List<OrderDto> getOrders(int page, int size);
+    OrderDto updateOrder(OrderDto orderDto);
 }

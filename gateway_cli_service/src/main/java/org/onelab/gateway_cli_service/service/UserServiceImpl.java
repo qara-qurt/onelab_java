@@ -9,7 +9,6 @@ import org.onelab.gateway_cli_service.dto.UserDto;
 import org.onelab.gateway_cli_service.dto.UserLoginDto;
 import org.onelab.gateway_cli_service.kafka.KafkaProducer;
 import org.onelab.gateway_cli_service.utils.Utils;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserClient userClient;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final TokenStorage tokenStorage;
     private final KafkaProducer kafkaProducer;
 

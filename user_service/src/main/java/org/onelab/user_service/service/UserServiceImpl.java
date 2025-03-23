@@ -2,6 +2,7 @@ package org.onelab.user_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.onelab.user_service.dto.OrderDto;
 import org.onelab.user_service.dto.UserDto;
 import org.onelab.user_service.dto.UserLoginDto;
 import org.onelab.user_service.entity.UserDocument;
@@ -82,18 +83,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void withDrawBalance(String orderId, String userId, double price) {
-        UserEntity user = userRepository.findById(Long.parseLong(userId))
-                .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found."));
+    public void withDrawBalance(OrderDto order, String businessKey) {
+        UserEntity user = userRepository.findById(order.getCustomerId())
+                .orElseThrow(() -> new NotFoundException("User with ID " + order.getCustomerId() + " not found."));
 
-        if (user.getBalance() < price) {
-            kafkaProducer.failedPaid(orderId, userId, price);
+        if (user.getBalance() < order.getTotalPrice()) {
+            kafkaProducer.failedPaid(order,businessKey);
             return;
         }
 
-        user.setBalance(user.getBalance() - price);
+        user.setBalance(user.getBalance() - order.getTotalPrice());
         userRepository.save(user);
-        kafkaProducer.successPaid(orderId, userId, price);
+        kafkaProducer.successPaid(order,businessKey);
     }
 
     @Override

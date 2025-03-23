@@ -1,18 +1,20 @@
-package org.onelab.user_service.kafka;
+package org.onelab.camunda_service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.onelab.user_service.dto.OrderDto;
-import org.onelab.user_service.service.UserService;
-import org.onelab.user_service.utils.KafkaTopics;
+import org.onelab.camunda_service.dto.OrderDto;
+import org.onelab.camunda_service.service.UserService;
+import org.onelab.camunda_service.utils.KafkaTopics;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 @Service
 @AllArgsConstructor
 public class KafkaConsumer {
@@ -20,41 +22,37 @@ public class KafkaConsumer {
     private final UserService userService;
     private final ObjectMapper objectMapper;
 
-    // Create Order
     @KafkaListener(
-            topics = KafkaTopics.WITHDRAW_ORDER,
+            topics = KafkaTopics.FAILED_PAID,
             groupId = KafkaTopics.GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
-    public void withdrawOrder(ConsumerRecord<String, String> record) {
+    public void handleFailedPayment(ConsumerRecord<String, String> record) {
         String key = record.key();
         String jsonPayload = record.value();
 
         try {
             OrderDto order = objectMapper.readValue(jsonPayload, OrderDto.class);
-
-            userService.withDrawBalance(order,key);
+            userService.failedPayment(order,key);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize OrderDto: " + e.getMessage(), e);
+            throw new RuntimeException("❌ Failed to deserialize OrderDto: " + e.getMessage(), e);
         }
     }
 
     @KafkaListener(
-            topics = KafkaTopics.USER_FILL_BALANCE,
+            topics = KafkaTopics.SUCCESS_PAID,
             groupId = KafkaTopics.GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
-    public void fillBalance(ConsumerRecord<String, String> record) {
-        String userID = record.key();
+    public void handleSuccessfulPayment(ConsumerRecord<String, String> record) {
+        String key = record.key();
         String jsonPayload = record.value();
 
         try {
-            String value = objectMapper.readValue(jsonPayload, String.class);
-            double amount = Double.parseDouble(value);
-
-            userService.fillBalance(Long.valueOf(userID), amount);
+            OrderDto order = objectMapper.readValue(jsonPayload, OrderDto.class);
+            userService.successPayment(order,key);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Deserialize error: " + e.getMessage());
+            throw new RuntimeException("❌ Failed to deserialize OrderDto: " + e.getMessage(), e);
         }
     }
 
