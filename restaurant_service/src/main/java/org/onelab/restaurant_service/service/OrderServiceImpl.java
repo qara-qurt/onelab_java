@@ -2,7 +2,8 @@ package org.onelab.restaurant_service.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.onelab.restaurant_service.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.enums.OrderStatus;
 import org.onelab.restaurant_service.entity.*;
 import org.onelab.restaurant_service.exception.NotFoundException;
 import org.onelab.restaurant_service.mapper.OrderMapper;
@@ -71,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderDto updateOrder(OrderDto orderDto) {
         OrderEntity order = orderRepository.findById(orderDto.getId())
                 .orElseThrow(() -> new NotFoundException("Order not found."));

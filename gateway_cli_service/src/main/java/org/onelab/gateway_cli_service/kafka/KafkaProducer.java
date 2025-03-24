@@ -1,7 +1,7 @@
 package org.onelab.gateway_cli_service.kafka;
 
 import lombok.RequiredArgsConstructor;
-import org.onelab.gateway_cli_service.utils.KafkaTopics;
+import org.onelab.common_lib.kafka.KafkaTopics;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 

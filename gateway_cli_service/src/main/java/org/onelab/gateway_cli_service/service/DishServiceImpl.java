@@ -2,7 +2,7 @@ package org.onelab.gateway_cli_service.service;
 
 import lombok.RequiredArgsConstructor;
 import org.onelab.gateway_cli_service.client.RestaurantClient;
-import org.onelab.gateway_cli_service.dto.DishDto;
+import org.onelab.common_lib.dto.DishDto;
 import org.onelab.gateway_cli_service.utils.Utils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

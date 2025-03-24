@@ -2,7 +2,7 @@ package org.onelab.restaurant_service.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.onelab.restaurant_service.dto.DishDto;
+import org.onelab.common_lib.dto.DishDto;
 import org.onelab.restaurant_service.service.DishService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

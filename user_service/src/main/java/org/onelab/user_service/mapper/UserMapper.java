@@ -1,11 +1,10 @@
 package org.onelab.user_service.mapper;
 
-import org.onelab.user_service.dto.UserDto;
-import org.onelab.user_service.entity.Role;
+import org.onelab.common_lib.dto.UserDto;
+import org.onelab.common_lib.enums.Role;
 import org.onelab.user_service.entity.UserDocument;
 import org.onelab.user_service.entity.UserEntity;
 
-import java.time.ZoneId;
 import java.util.Collections;
 
 public class UserMapper {
@@ -35,15 +34,13 @@ public class UserMapper {
                 .balance(document.getBalance())
                 .roles(document.getRoles() != null
                         ? document.getRoles().stream().map(Role::valueOf).toList()
-                        : Collections.emptyList()
-                )
+                        : Collections.emptyList())
                 .birthDate(document.getBirthDate())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
                 .isActive(document.isActive())
                 .build();
     }
-
 
     public static UserEntity toEntity(UserDto dto) {
         return UserEntity.builder()
@@ -60,7 +57,6 @@ public class UserMapper {
                 .birthDate(dto.getBirthDate())
                 .build();
     }
-
 
     public static UserDocument toDocument(UserEntity entity) {
         return new UserDocument(

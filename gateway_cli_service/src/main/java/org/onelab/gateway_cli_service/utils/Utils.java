@@ -1,6 +1,6 @@
 package org.onelab.gateway_cli_service.utils;
 
-import org.onelab.gateway_cli_service.dto.*;
+import org.onelab.common_lib.dto.*;
 
 import java.util.List;
 import java.util.regex.Pattern;

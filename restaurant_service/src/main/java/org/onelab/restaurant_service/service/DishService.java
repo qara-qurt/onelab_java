@@ -1,6 +1,6 @@
 package org.onelab.restaurant_service.service;
 
-import org.onelab.restaurant_service.dto.DishDto;
+import org.onelab.common_lib.dto.DishDto;
 
 import java.util.List;
 

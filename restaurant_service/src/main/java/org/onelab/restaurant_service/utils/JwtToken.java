@@ -22,10 +22,6 @@ public class JwtToken {
                 .getBody();
     }
 
-    public String getUsernameFromToken(String token) {
-        return getAllClaimsFromToken(token).getSubject();
-    }
-
     public List<String> getRolesFromToken(String token) {
         return getAllClaimsFromToken(token).get("roles", List.class);
     }

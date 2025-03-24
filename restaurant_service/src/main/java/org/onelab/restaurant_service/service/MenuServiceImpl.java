@@ -2,25 +2,22 @@ package org.onelab.restaurant_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.onelab.restaurant_service.dto.DishDto;
-import org.onelab.restaurant_service.dto.MenuDto;
-import org.onelab.restaurant_service.dto.MenuRequestDto;
-import org.onelab.restaurant_service.entity.MenuEntity;
+import org.onelab.common_lib.dto.MenuDto;
+import org.onelab.common_lib.dto.MenuRequestDto;
 import org.onelab.restaurant_service.entity.MenuDocument;
+import org.onelab.restaurant_service.entity.MenuEntity;
 import org.onelab.restaurant_service.entity.DishEntity;
 import org.onelab.restaurant_service.exception.AlreadyExistException;
 import org.onelab.restaurant_service.exception.NotFoundException;
 import org.onelab.restaurant_service.mapper.MenuMapper;
+import org.onelab.restaurant_service.mapper.OrderMapper;
 import org.onelab.restaurant_service.repository.MenuRepository;
 import org.onelab.restaurant_service.repository.MenuElasticRepository;
 import org.onelab.restaurant_service.repository.DishRepository;
-import org.onelab.restaurant_service.repository.DishElasticRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,7 +27,6 @@ public class MenuServiceImpl implements MenuService {
     private final MenuRepository menuRepository;
     private final MenuElasticRepository menuElasticRepository;
     private final DishRepository dishRepository;
-    private final DishElasticRepository dishElasticRepository;
 
     @Override
     @Transactional
@@ -59,6 +55,7 @@ public class MenuServiceImpl implements MenuService {
                 .build();
 
         MenuEntity savedMenu = menuRepository.save(menu);
+        syncMenuToElastic(savedMenu);
 
         return savedMenu.getId().toString();
     }
@@ -100,6 +97,7 @@ public class MenuServiceImpl implements MenuService {
 
         menu.getDishes().addAll(newDishes);
         menuRepository.save(menu);
+        syncMenuToElastic(menu);
     }
 
     @Override
@@ -123,6 +121,7 @@ public class MenuServiceImpl implements MenuService {
         menu.getDishes().removeIf(dish -> removableDishes.contains(dish.getId()));
 
         menuRepository.save(menu);
+        syncMenuToElastic(menu);
     }
 
 
@@ -142,4 +141,8 @@ public class MenuServiceImpl implements MenuService {
                 .toList();
     }
 
+    private void syncMenuToElastic(MenuEntity menu) {
+        MenuDocument menuDocument = MenuMapper.toDocument(menu);
+        menuElasticRepository.save(menuDocument);
+    }
 }

@@ -1,7 +1,7 @@
 package org.onelab.gateway_cli_service.client;
 
 import org.onelab.gateway_cli_service.config.ClientConfig;
-import org.onelab.gateway_cli_service.dto.*;
+import org.onelab.common_lib.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 

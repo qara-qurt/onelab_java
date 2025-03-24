@@ -1,7 +1,7 @@
 package org.onelab.gateway_cli_service.shell;
 
 import lombok.RequiredArgsConstructor;
-import org.onelab.gateway_cli_service.dto.Role;
+import org.onelab.common_lib.enums.Role;
 import org.onelab.gateway_cli_service.service.UserService;
 import org.onelab.gateway_cli_service.utils.Utils;
 import org.springframework.shell.standard.ShellComponent;

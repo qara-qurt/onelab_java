@@ -2,6 +2,7 @@ package org.onelab.restaurant_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.onelab.common_lib.enums.OrderStatus;
 
 import java.util.List;
 

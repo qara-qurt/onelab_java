@@ -1,6 +1,6 @@
 package org.onelab.restaurant_service.mapper;
 
-import org.onelab.restaurant_service.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderDto;
 import org.onelab.restaurant_service.entity.OrderDocument;
 import org.onelab.restaurant_service.entity.OrderEntity;
 

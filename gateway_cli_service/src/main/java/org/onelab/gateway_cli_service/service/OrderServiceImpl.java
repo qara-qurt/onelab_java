@@ -1,11 +1,12 @@
 package org.onelab.gateway_cli_service.service;
 
 import lombok.RequiredArgsConstructor;
+import org.onelab.gateway_cli_service.client.CamundaClient;
 import org.onelab.gateway_cli_service.client.RestaurantClient;
 import org.onelab.gateway_cli_service.client.TokenStorage;
-import org.onelab.gateway_cli_service.dto.DishDto;
-import org.onelab.gateway_cli_service.dto.OrderDto;
-import org.onelab.gateway_cli_service.dto.OrderRequestDto;
+import org.onelab.common_lib.dto.DishDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderRequestDto;
 import org.onelab.gateway_cli_service.kafka.KafkaProducer;
 import org.onelab.gateway_cli_service.utils.JwtToken;
 import org.onelab.gateway_cli_service.utils.Utils;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final RestaurantClient restaurantClient;
-    private final KafkaProducer kafkaProducer;
+    private final CamundaClient camundaClient;
     private final TokenStorage tokenStorage;
     private final JwtToken jwtTokenUtil;
 
@@ -37,9 +38,9 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderRequestDto orderRequest = new OrderRequestDto(customerID, dishIDs);
-            OrderDto order = restaurantClient.createOrder(orderRequest);
+            String string = camundaClient.createOrder(orderRequest);
 
-            return "✅ Заказ #" + order.getId() + " для клиента " + customerID + " создан.";
+            return string + " для клиента " + customerID + " создан.";
         } catch (Exception e) {
             return "❌ Ошибка при создании заказа: " + e.getMessage();
         }

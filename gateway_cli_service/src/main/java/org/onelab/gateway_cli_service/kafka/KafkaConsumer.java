@@ -2,7 +2,7 @@ package org.onelab.gateway_cli_service.kafka;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.onelab.gateway_cli_service.utils.KafkaTopics;
+import org.onelab.common_lib.kafka.KafkaTopics;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class KafkaConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.FAILED_PAID,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.CLI_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handleFailedPayment(String message) {
@@ -28,7 +28,7 @@ public class KafkaConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.SUCCESS_PAID,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.CLI_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handleSuccessfulPayment(String message) {

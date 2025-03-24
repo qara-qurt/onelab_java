@@ -1,6 +1,5 @@
 package org.onelab.restaurant_service.aop;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.slf4j.Logger;

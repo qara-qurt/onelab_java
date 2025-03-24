@@ -1,6 +1,6 @@
 package org.onelab.restaurant_service.mapper;
 
-import org.onelab.restaurant_service.dto.MenuDto;
+import org.onelab.common_lib.dto.MenuDto;
 import org.onelab.restaurant_service.entity.MenuDocument;
 import org.onelab.restaurant_service.entity.MenuEntity;
 

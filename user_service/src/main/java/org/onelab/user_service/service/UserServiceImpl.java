@@ -2,9 +2,9 @@ package org.onelab.user_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.onelab.user_service.dto.OrderDto;
-import org.onelab.user_service.dto.UserDto;
-import org.onelab.user_service.dto.UserLoginDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.dto.UserDto;
+import org.onelab.common_lib.dto.UserLoginDto;
 import org.onelab.user_service.entity.UserDocument;
 import org.onelab.user_service.entity.UserEntity;
 import org.onelab.user_service.exception.AlreadyExistException;
@@ -58,6 +58,7 @@ public class UserServiceImpl implements UserService {
         userDto.setActive(true);
 
         UserEntity userEntity = userRepository.save(UserMapper.toEntity(userDto));
+        syncToElastic(userEntity);
         return userEntity.getId();
     }
 
@@ -94,6 +95,8 @@ public class UserServiceImpl implements UserService {
 
         user.setBalance(user.getBalance() - order.getTotalPrice());
         userRepository.save(user);
+
+        syncToElastic(user);
         kafkaProducer.successPaid(order,businessKey);
     }
 
@@ -103,6 +106,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found."));
         user.setBalance(user.getBalance() + amount);
         userRepository.save(user);
+        syncToElastic(user);
     }
 
     @Override
@@ -131,8 +135,11 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundException("User with ID " + id + " not found.");
         }
 
-        existingUser.get().setActive(false);
-        userRepository.save(existingUser.get());
+        UserEntity user = existingUser.get();
+        user.setActive(false);
+        userRepository.save(user);
+
+        syncToElastic(user);
         return "User successfully deleted";
     }
 
@@ -212,6 +219,11 @@ public class UserServiceImpl implements UserService {
 
         return userElasticRepository.findByBirthDateBetween(start, end, pageable)
                     .map(UserMapper::toDto).stream().collect(Collectors.toList());
+    }
+
+    private void syncToElastic(UserEntity user) {
+        UserDocument document = UserMapper.toDocument(user);
+        userElasticRepository.save(document);
     }
 
 }

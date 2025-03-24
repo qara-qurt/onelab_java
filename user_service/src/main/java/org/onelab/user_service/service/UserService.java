@@ -1,8 +1,8 @@
 package org.onelab.user_service.service;
 
-import org.onelab.user_service.dto.OrderDto;
-import org.onelab.user_service.dto.UserDto;
-import org.onelab.user_service.dto.UserLoginDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.dto.UserDto;
+import org.onelab.common_lib.dto.UserLoginDto;
 
 import java.time.LocalDate;
 import java.util.List;

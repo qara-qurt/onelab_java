@@ -2,10 +2,9 @@ package org.onelab.restaurant_service.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.onelab.restaurant_service.dto.OrderDto;
-import org.onelab.restaurant_service.dto.OrderRequestDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderRequestDto;
 import org.onelab.restaurant_service.service.OrderService;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -2,8 +2,8 @@ package org.onelab.user_service.сontroller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.onelab.user_service.dto.UserDto;
-import org.onelab.user_service.dto.UserLoginDto;
+import org.onelab.common_lib.dto.UserDto;
+import org.onelab.common_lib.dto.UserLoginDto;
 import org.onelab.user_service.service.UserService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

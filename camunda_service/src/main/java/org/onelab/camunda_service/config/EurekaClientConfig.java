@@ -1,4 +1,5 @@
 package org.onelab.camunda_service.config;
+
 import com.netflix.discovery.shared.transport.jersey3.Jersey3TransportClientFactories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

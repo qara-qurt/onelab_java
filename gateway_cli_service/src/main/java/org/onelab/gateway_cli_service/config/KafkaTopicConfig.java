@@ -1,7 +1,7 @@
 package org.onelab.gateway_cli_service.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
-import org.onelab.gateway_cli_service.utils.KafkaTopics;
+import org.onelab.common_lib.kafka.KafkaTopics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

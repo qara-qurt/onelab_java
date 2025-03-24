@@ -1,6 +1,6 @@
 package org.onelab.gateway_cli_service.service;
 
-import org.onelab.gateway_cli_service.dto.Role;
+import org.onelab.common_lib.enums.Role;
 
 import java.util.List;
 

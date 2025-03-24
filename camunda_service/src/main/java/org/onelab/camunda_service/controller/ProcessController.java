@@ -1,28 +1,35 @@
 package org.onelab.camunda_service.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.onelab.camunda_service.dto.OrderRequestDto;
+import org.onelab.common_lib.dto.OrderRequestDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping(ProcessController.BASE_URL)
-@RequiredArgsConstructor
 public class ProcessController {
     public static final String BASE_URL = "api/process/start";
     public static final String CREATE_ORDER = "/create-order";
 
     private final RuntimeService runtimeService;
 
+    @Autowired
+    public ProcessController(RuntimeService runtimeService) {
+        this.runtimeService = runtimeService;
+    }
+
     @PostMapping(CREATE_ORDER)
     public ResponseEntity<String> startProcess(@RequestHeader("Authorization") String token,
                                                @RequestBody OrderRequestDto orderRequest) {
+
+        if (token == null) {
+            return ResponseEntity.badRequest().body("Authorization header is missing");
+        }
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("userId", orderRequest.getCustomerId());

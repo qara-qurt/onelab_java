@@ -1,0 +1,3 @@
+jwt:
+  secret: 5eCR3tK3y5eCR3tK3y5eCR3tK3y5eCR3tK3y
+  expiration: 3h

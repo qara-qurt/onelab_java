@@ -1,17 +1,15 @@
 package org.onelab.user_service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.onelab.user_service.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderDto;
 import org.onelab.user_service.service.UserService;
-import org.onelab.user_service.utils.KafkaTopics;
+import org.onelab.common_lib.kafka.KafkaTopics;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -23,7 +21,7 @@ public class KafkaConsumer {
     // Create Order
     @KafkaListener(
             topics = KafkaTopics.WITHDRAW_ORDER,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.USER_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void withdrawOrder(ConsumerRecord<String, String> record) {
@@ -41,7 +39,7 @@ public class KafkaConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.USER_FILL_BALANCE,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.USER_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void fillBalance(ConsumerRecord<String, String> record) {

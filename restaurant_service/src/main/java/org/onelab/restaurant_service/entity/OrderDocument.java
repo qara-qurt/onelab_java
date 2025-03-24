@@ -1,6 +1,7 @@
 package org.onelab.restaurant_service.entity;
 
 import lombok.*;
+import org.onelab.common_lib.enums.OrderStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;

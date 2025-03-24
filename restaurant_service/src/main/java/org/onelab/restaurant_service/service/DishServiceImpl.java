@@ -1,7 +1,8 @@
 package org.onelab.restaurant_service.service;
 
 import lombok.RequiredArgsConstructor;
-import org.onelab.restaurant_service.dto.DishDto;
+import org.onelab.common_lib.dto.DishDto;
+import org.onelab.restaurant_service.entity.DishDocument;
 import org.onelab.restaurant_service.entity.DishEntity;
 import org.onelab.restaurant_service.exception.AlreadyExistException;
 import org.onelab.restaurant_service.exception.NotFoundException;
@@ -29,7 +30,10 @@ public class DishServiceImpl implements DishService {
         }
 
         DishEntity dish = DishMapper.toEntity(dishDto);
-        return dishRepository.save(dish).getId();
+        Long id = dishRepository.save(dish).getId();
+        syncDishToElastic(dish);
+
+        return id;
     }
 
     @Override
@@ -38,6 +42,7 @@ public class DishServiceImpl implements DishService {
             throw new NotFoundException("Dish not found");
         }
         dishRepository.deleteById(id);
+        dishElasticRepository.deleteById(String.valueOf(id));
     }
 
     @Override
@@ -63,5 +68,10 @@ public class DishServiceImpl implements DishService {
                 .stream()
                 .map(DishMapper::toDto)
                 .toList();
+    }
+
+    private void syncDishToElastic(DishEntity dish) {
+        DishDocument dishDocument = DishMapper.toDocument(dish);
+        dishElasticRepository.save(dishDocument);
     }
 }

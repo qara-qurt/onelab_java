@@ -1,4 +1,4 @@
-package org.onelab.restaurant_service.controller;
+package org.onelab.restaurant_service.service.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.onelab.restaurant_service.dto.OrderDto;
-import org.onelab.restaurant_service.dto.OrderRequestDto;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.restaurant_service.controller.OrderController;
 import org.onelab.restaurant_service.service.OrderService;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;

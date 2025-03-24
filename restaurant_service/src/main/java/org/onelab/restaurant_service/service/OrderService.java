@@ -1,6 +1,6 @@
 package org.onelab.restaurant_service.service;
 
-import org.onelab.restaurant_service.dto.OrderDto;
+import org.onelab.common_lib.dto.OrderDto;
 
 import java.util.List;
 

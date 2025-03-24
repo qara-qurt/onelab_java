@@ -5,15 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.onelab.restaurant_service.dto.OrderDto;
-import org.onelab.restaurant_service.entity.OrderStatus;
+import org.onelab.common_lib.dto.OrderDto;
+import org.onelab.common_lib.enums.OrderStatus;
+import org.onelab.common_lib.kafka.KafkaTopics;
 import org.onelab.restaurant_service.service.OrderService;
-import org.onelab.restaurant_service.utils.KafkaTopics;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Service
@@ -25,7 +22,7 @@ public class KafkaConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.FAILED_PAID,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.RESTAURANT_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handleFailedPayment(ConsumerRecord<String, String> record) {
@@ -43,7 +40,7 @@ public class KafkaConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.SUCCESS_PAID,
-            groupId = KafkaTopics.GROUP_ID,
+            groupId = KafkaTopics.RESTAURANT_GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handleSuccessfulPayment(ConsumerRecord<String, String> record) {
