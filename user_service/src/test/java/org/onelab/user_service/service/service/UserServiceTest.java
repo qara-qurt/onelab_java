@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.onelab.common_lib.dto.OrderDto;
 import org.onelab.common_lib.dto.UserDto;
 import org.onelab.common_lib.dto.UserLoginDto;
 import org.onelab.common_lib.enums.Role;
@@ -197,30 +198,51 @@ class UserServiceTest {
 
     @Test
     void testWithDrawBalance_Success() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(mockUser));
+        OrderDto order = OrderDto.builder()
+                .id(1L)
+                .customerId(1L)
+                .totalPrice(50.0)
+                .build();
 
-        userService.withDrawBalance("order123", "1", 50.0);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
+
+        userService.withDrawBalance(order, "ORDER-1");
 
         assertEquals(50.0, mockUser.getBalance());
-        verify(kafkaProducer, times(1)).successPaid("order123", "1", 50.0);
+        verify(kafkaProducer, times(1)).successPaid(order, "ORDER-1");
     }
+
 
     @Test
     void testWithDrawBalance_InsufficientFunds() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(mockUser));
+        OrderDto order = OrderDto.builder()
+                .id(1L)
+                .customerId(1L)
+                .totalPrice(200.0)
+                .build();
 
-        userService.withDrawBalance("order123", "1", 200.0);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
 
-        assertEquals(100.0, mockUser.getBalance()); // Balance should remain unchanged
-        verify(kafkaProducer, times(1)).failedPaid("order123", "1", 200.0);
+        userService.withDrawBalance(order, "ORDER-2");
+
+        assertEquals(100.0, mockUser.getBalance());
+        verify(kafkaProducer, times(1)).failedPaid(order, "ORDER-2");
     }
+
 
     @Test
     void testWithDrawBalance_UserNotFound() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        OrderDto order = OrderDto.builder()
+                .id(1L)
+                .customerId(99L)
+                .totalPrice(50.0)
+                .build();
 
-        assertThrows(NotFoundException.class, () -> userService.withDrawBalance("order123", "1", 50.0));
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.withDrawBalance(order, "ORDER-3"));
     }
+
 
     @Test
     void testFilterStreamUsersByBalance() {
