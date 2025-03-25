@@ -12,6 +12,8 @@ import org.onelab.common_lib.dto.OrderDto;
 import org.onelab.order_worker.config.FeignTokenInterceptor;
 import org.onelab.order_worker.service.OrderService;
 import org.onelab.order_worker.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,10 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class OrderHandler {
+
+    private final Logger log = LoggerFactory.getLogger(OrderHandler.class);
 
     private final OrderService orderService;
     private final UserService userService;

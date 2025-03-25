@@ -1,141 +1,126 @@
-//package org.onelab.gateway_cli_service.service;
-//
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.onelab.gateway_cli_service.entity.Dish;
-//import org.onelab.gateway_cli_service.kafka.KafkaProducer;
-//import org.onelab.gateway_cli_service.repository.DishRepository;
-//import org.springframework.data.domain.Page;
-//import org.springframework.data.domain.PageImpl;
-//import org.springframework.data.domain.PageRequest;
-//import org.springframework.data.domain.Pageable;
-//
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class DishServiceTest {
-//
-//    @Mock
-//    private DishRepository dishRepository;
-//
-//    @Mock
-//    private KafkaProducer kafkaProducer;
-//
-//    @InjectMocks
-//    private DishServiceImpl dishService;
-//
-//    private Dish testDish;
-//
-//    @BeforeEach
-//    void setUp() {
-//        testDish = Dish.builder()
-//                .id("1")
-//                .name("Pizza")
-//                .description("Cheese Pizza")
-//                .price(10.99)
-//                .build();
-//    }
-//
-//    @Test
-//    void shouldReturnDishes_WhenDishesExist() {
-//        PageRequest pageRequest = PageRequest.of(0, 10);
-//        List<Dish> dishes = List.of(testDish);
-//        Page<Dish> page = new PageImpl<>(dishes);
-//
-//        when(dishRepository.findAll(pageRequest)).thenReturn(page);
-//
-//        String result = dishService.getDishes(1, 10);
-//
-//        assertTrue(result.contains("Pizza"));
-//        verify(dishRepository, times(1)).findAll(pageRequest);
-//    }
-//
-//    @Test
-//    void shouldReturnNoDishesMessage_WhenNoDishesExist() {
-//        PageRequest pageRequest = PageRequest.of(0, 10);
-//        Page<Dish> emptyPage = Page.empty();
-//
-//        when(dishRepository.findAll(pageRequest)).thenReturn(emptyPage);
-//
-//        String result = dishService.getDishes(1, 10);
-//
-//        assertEquals("❌ Нету блюд", result);
-//    }
-//
-//    @Test
-//    void shouldAddDish_WhenDishDoesNotExist() {
-//        when(dishRepository.findByName("Pizza")).thenReturn(Optional.empty());
-//
-//        String result = dishService.addDish("Pizza", "Cheese Pizza", 10.99);
-//
-//        assertTrue(result.contains("✅ Блюдо \"Pizza\""));
-//        verify(kafkaProducer, times(1)).addDish(any(Dish.class));
-//    }
-//
-//    @Test
-//    void shouldNotAddDish_WhenDishAlreadyExists() {
-//        when(dishRepository.findByName("Pizza")).thenReturn(Optional.of(testDish));
-//
-//        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-//                dishService.addDish("Pizza", "Cheese Pizza", 10.99));
-//
-//        assertEquals("❌ Блюдо с названием Pizza уже существует.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void shouldRemoveDish_WhenDishExists() {
-//        when(dishRepository.findById("1")).thenReturn(Optional.of(testDish));
-//
-//        String result = dishService.removeDish("1");
-//
-//        assertTrue(result.contains("✅ Блюдо с ID 1 будет удалено."));
-//        verify(kafkaProducer, times(1)).removeDish("1");
-//    }
-//
-//    @Test
-//    void shouldNotRemoveDish_WhenDishDoesNotExist() {
-//        when(dishRepository.findById("99")).thenReturn(Optional.empty());
-//
-//        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-//                dishService.removeDish("99"));
-//
-//        assertEquals("❌ Блюдо с ID 99 нету.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void shouldReturnDishes_WhenSearchHasResults() {
-//        // Given
-//        String searchName = "Pizza";
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<Dish> dishPage = new PageImpl<>(List.of(testDish));
-//
-//        when(dishRepository.searchByFields(searchName, pageable)).thenReturn(dishPage);
-//
-//        String result = dishService.searchDishes(searchName, 1, 10);
-//
-//        assertTrue(result.contains("Pizza"));
-//        verify(dishRepository, times(1)).searchByFields(searchName, pageable);
-//    }
-//
-//    @Test
-//    void shouldReturnErrorMessage_WhenNoDishesFound() {
-//        String searchName = "UnknownDish";
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<Dish> emptyPage = Page.empty();
-//
-//        when(dishRepository.searchByFields(searchName, pageable)).thenReturn(emptyPage);
-//
-//        String result = dishService.searchDishes(searchName, 1, 10);
-//
-//        assertEquals("❌ Блюлдо с параметром 'UnknownDish' не найден.", result);
-//        verify(dishRepository, times(1)).searchByFields(searchName, pageable);
-//    }
-//}
+package org.onelab.gateway_cli_service.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.onelab.common_lib.dto.DishDto;
+import org.onelab.gateway_cli_service.client.RestaurantClient;
+import org.onelab.gateway_cli_service.utils.Utils;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+public class DishServiceTest {
+
+    private RestaurantClient restaurantClient;
+    private DishServiceImpl dishService;
+
+    @BeforeEach
+    public void setup() {
+        restaurantClient = mock(RestaurantClient.class);
+        dishService = new DishServiceImpl(restaurantClient);
+    }
+
+    @Test
+    public void testGetDishes_whenDishesExist_returnsFormattedDishes() {
+        List<DishDto> mockDishes = List.of(
+                DishDto.builder().id(1L).name("Pizza").description("Cheese").price(9.99).build(),
+                DishDto.builder().id(2L).name("Burger").description("Beef").price(7.99).build()
+        );
+
+        when(restaurantClient.getDishes(1, 10)).thenReturn(mockDishes);
+
+        String result = dishService.getDishes(1, 10);
+
+        String expected = String.join("\n",
+                Utils.formatDish(mockDishes.get(0)),
+                Utils.formatDish(mockDishes.get(1))
+        );
+
+        assertEquals(expected, result);
+    }
+
+
+    @Test
+    public void testGetDishes_whenNoDishes_returnsNotFoundMessage() {
+        when(restaurantClient.getDishes(1, 10)).thenReturn(Collections.emptyList());
+
+        String result = dishService.getDishes(1, 10);
+
+        assertEquals("❌ Нет доступных блюд", result);
+    }
+
+    @Test
+    public void testAddDish_whenSuccess_returnsSuccessMessage() {
+        DishDto dish = DishDto.builder().name("Salad").description("Fresh").price(5.5).build();
+        Map<String, Long> response = Map.of("id", 100L);
+
+        when(restaurantClient.addDish(any())).thenReturn(response);
+
+        String result = dishService.addDish("Salad", "Fresh", 5.5);
+
+        assertEquals("✅ Блюдо добавлено! ID: 100", result);
+    }
+
+    @Test
+    public void testAddDish_whenConflict_returnsErrorMessage() {
+        DishDto dish = DishDto.builder().name("Salad").description("Fresh").price(5.5).build();
+
+        when(restaurantClient.addDish(any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT));
+
+        String result = dishService.addDish("Salad", "Fresh", 5.5);
+
+        assertEquals("❌ Блюдо с таким названием уже существует.", result);
+    }
+
+    @Test
+    public void testRemoveDish_whenSuccess_returnsSuccessMessage() {
+        Long id = 42L;
+
+        String result = dishService.removeDish(id);
+
+        verify(restaurantClient).removeDish(id);
+        assertEquals("✅ Блюдо с ID 42 удалено.", result);
+    }
+
+    @Test
+    public void testRemoveDish_whenNotFound_returnsErrorMessage() {
+        Long id = 999L;
+
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
+                .when(restaurantClient).removeDish(id);
+
+        String result = dishService.removeDish(id);
+
+        assertEquals("❌ Блюдо с ID 999 не найдено.", result);
+    }
+
+    @Test
+    public void testSearchDishes_whenFound_returnsFormattedDishes() {
+        List<DishDto> mockDishes = List.of(
+                DishDto.builder().id(3L).name("Sushi").description("Fish").price(12.0).build()
+        );
+
+        when(restaurantClient.searchDishes("Sushi", 1, 10)).thenReturn(mockDishes);
+
+        String result = dishService.searchDishes("Sushi", 1, 10);
+
+        String expected = Utils.formatDish(mockDishes.get(0));
+
+        assertEquals(expected, result);
+    }
+
+
+    @Test
+    public void testSearchDishes_whenNotFound_returnsErrorMessage() {
+        when(restaurantClient.searchDishes("NotExist", 1, 10)).thenReturn(Collections.emptyList());
+
+        String result = dishService.searchDishes("NotExist", 1, 10);
+
+        assertEquals("❌ Блюдо с параметром 'NotExist' не найдено.", result);
+    }
+}

@@ -1,159 +1,203 @@
-//package org.onelab.gateway_cli_service.service;
-//
-//import org.junit.jupiter.api.Test;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.onelab.gateway_cli_service.entity.User;
-//import org.onelab.gateway_cli_service.kafka.KafkaProducer;
-//import org.onelab.gateway_cli_service.repository.UserRepository;
-//import org.springframework.data.domain.Page;
-//import org.springframework.data.domain.PageImpl;
-//import org.springframework.data.domain.PageRequest;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-//
-//import java.time.Instant;
-//import java.util.Collections;
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.*;
-//import static org.mockito.Mockito.*;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//
-//@ExtendWith(MockitoExtension.class)
-//class UserServiceTest {
-//
-//    @Mock
-//    private UserRepository userRepository;
-//
-//    @Mock
-//    private KafkaProducer kafkaProducer;
-//
-//    @Mock
-//    private BCryptPasswordEncoder passwordEncoder;
-//
-//    @InjectMocks
-//    private UserServiceImpl userService;
-//
-//    private final User diasUser = User.builder()
-//            .id("1")
-//            .name("Dias")
-//            .surname("Serikov")
-//            .username("dias")
-//            .phone("+7777777777")
-//            .password("hashedPass")
-//            .balance(0.0)
-//            .isActive(true)
-//            .createdAt(Instant.now())
-//            .build();
-//
-//    @Test
-//    void getUserById_shouldReturnUser_whenUserExists() {
-//        when(userRepository.findById("1")).thenReturn(Optional.of(diasUser));
-//
-//        String result = userService.getUserByID("1");
-//
-//        assertTrue(result.contains("Dias"));
-//        verify(userRepository, times(1)).findById("1");
-//    }
-//
-//    @Test
-//    void getUserById_shouldThrowException_whenUserNotFound() {
-//        when(userRepository.findById("1")).thenReturn(Optional.empty());
-//
-//        String result = userService.getUserByID("1");
-//
-//        assertEquals("❌ Пользователь с ID 1 не найден.", result);
-//        verify(userRepository, times(1)).findById("1");
-//    }
-//
-//    @Test
-//    void createUser_shouldThrowException_whenUsernameExists() {
-//        when(userRepository.findByUsername("dias")).thenReturn(Optional.of(diasUser));
-//
-//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-//                userService.createUser("Dias", "Serikov", "dias", "+7777777777", "password")
-//        );
-//
-//        assertEquals("❌ Пользователь с именем dias уже существует.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void createUser_shouldThrowException_whenPhoneExists() {
-//        when(userRepository.findByUsername("dias")).thenReturn(Optional.empty());
-//        when(userRepository.findByPhone("+7777777777")).thenReturn(Optional.of(diasUser));
-//
-//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-//                userService.createUser("Dias", "Serikov", "dias", "+7777777777", "password")
-//        );
-//
-//        assertEquals("❌ Пользователь с телефоном +7777777777 уже существует.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void createUser_shouldCreateUser_whenDataIsValid() {
-//        when(userRepository.findByUsername("dias")).thenReturn(Optional.empty());
-//        when(userRepository.findByPhone("+7777777777")).thenReturn(Optional.empty());
-//        when(passwordEncoder.encode(anyString())).thenReturn("hashedPass");
-//
-//        String result = userService.createUser("Dias", "Serikov", "dias", "+7777777777", "password");
-//
-//        assertTrue(result.contains("Создание пользователя"));
-//        verify(kafkaProducer, times(1)).sendUser(any(User.class));
-//    }
-//
-//    @Test
-//    void searchUsers_shouldReturnUsers_whenMatchFound() {
-//        Page<User> page = new PageImpl<>(List.of(diasUser));
-//
-//        when(userRepository.searchByFields(eq("Dias"), any(PageRequest.class))).thenReturn(page);
-//
-//        String result = userService.searchUsers("Dias", 1, 10);
-//
-//        assertTrue(result.contains("Dias"));
-//        verify(userRepository, times(1)).searchByFields(eq("Dias"), any(PageRequest.class));
-//    }
-//
-//    @Test
-//    void getUsers_shouldReturnUsers_whenUsersExist() {
-//        Page<User> page = new PageImpl<>(List.of(diasUser));
-//
-//        when(userRepository.findAllUsers(any(PageRequest.class))).thenReturn(page);
-//
-//        String result = userService.getUsers(1, 10);
-//
-//        assertTrue(result.contains("Dias"));
-//        verify(userRepository, times(1)).findAllUsers(any(PageRequest.class));
-//    }
-//
-//    @Test
-//    void getUsers_shouldReturnNotFoundMessage_whenNoUsersExist() {
-//        when(userRepository.findAllUsers(any(PageRequest.class))).thenReturn(new PageImpl<>(Collections.emptyList()));
-//
-//        String result = userService.getUsers(1, 10);
-//
-//        assertEquals("❌ Пользователи не найдены.", result);
-//    }
-//
-//    @Test
-//    void removeUser_shouldDeleteUser_whenUserExists() {
-//        when(userRepository.findById("1")).thenReturn(Optional.of(diasUser));
-//
-//        String result = userService.removeUser("1");
-//
-//        assertEquals("🗑 Пользователь с ID 1 удален.", result);
-//        verify(userRepository, times(1)).deleteById("1");
-//    }
-//
-//    @Test
-//    void fillBalance_shouldSendKafkaMessage_whenUserExists() {
-//        when(userRepository.findById("1")).thenReturn(Optional.of(diasUser));
-//
-//        String result = userService.fillBalance("1", 100.0);
-//
-//        assertEquals("✅ Баланс пользователя 1 пополнится 100.0 kz.", result);
-//        verify(kafkaProducer, times(1)).fillBalance("1", 100.0);
-//    }
-//}
+package org.onelab.gateway_cli_service.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.onelab.common_lib.dto.UserDto;
+import org.onelab.common_lib.dto.UserLoginDto;
+import org.onelab.common_lib.enums.Role;
+import org.onelab.gateway_cli_service.client.TokenStorage;
+import org.onelab.gateway_cli_service.client.UserClient;
+import org.onelab.gateway_cli_service.kafka.KafkaProducer;
+import org.onelab.gateway_cli_service.utils.Utils;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class UserServiceTest {
+
+    private UserClient userClient;
+    private TokenStorage tokenStorage;
+    private KafkaProducer kafkaProducer;
+    private UserServiceImpl userService;
+
+    @BeforeEach
+    void setUp() {
+        userClient = mock(UserClient.class);
+        tokenStorage = mock(TokenStorage.class);
+        kafkaProducer = mock(KafkaProducer.class);
+        userService = new UserServiceImpl(userClient, tokenStorage, kafkaProducer);
+    }
+
+    @Test
+    void testLogin_whenSuccess_returnsTokenMessage() {
+        UserLoginDto expectedLogin = UserLoginDto.builder()
+                .username("user")
+                .password("pass")
+                .build();
+
+        when(userClient.loginUser(any())).thenReturn(Map.of("token", "jwt.token"));
+
+        String result = userService.login("user", "pass");
+
+        assertEquals("✅ Успешный вход. Токен сохранен.", result);
+        verify(tokenStorage).setToken("jwt.token");
+    }
+
+    @Test
+    void testLogin_whenNoToken_returnsError() {
+        when(userClient.loginUser(any())).thenReturn(Map.of());
+
+        String result = userService.login("user", "pass");
+
+        assertEquals("❌ Ошибка авторизации.", result);
+    }
+
+    @Test
+    void testLogin_whenExceptionThrown_returnsErrorMessage() {
+        when(userClient.loginUser(any())).thenThrow(new RuntimeException("Ошибка"));
+
+        String result = userService.login("user", "pass");
+
+        assertEquals("❌ Ошибка при авторизации: Ошибка", result);
+    }
+
+    @Test
+    void testGetUserById_returnsFormattedUser() {
+        UserDto user = UserDto.builder()
+                .id(1L)
+                .name("Test")
+                .surname("User")
+                .username("tester")
+                .phone("+77001112233")
+                .balance(100.0)
+                .isActive(true)
+                .build();
+
+        when(userClient.getUserById(1L)).thenReturn(user);
+
+        String result = userService.getUserByID(1L);
+
+        assertEquals(Utils.formatUser(user), result);
+    }
+
+    @Test
+    void testCreateUser_whenValid_returnsSuccessMessage() {
+        UserDto created = UserDto.builder()
+                .id(10L)
+                .username("testuser")
+                .build();
+
+        when(userClient.registerUser(any())).thenReturn(created);
+
+        String result = userService.createUser("Name", "Surname", "testuser", "+77001112233", "password",
+                List.of(Role.USER));
+
+        assertEquals("✅ Пользователь testuser зарегистрирован. ID: 10", result);
+    }
+
+    @Test
+    void testCreateUser_whenInvalid_returnsValidationError() {
+        String result = userService.createUser("", "", "", "invalid", "123", List.of());
+
+        assertTrue(result.contains("❌ Имя не может быть пустым"));
+        assertTrue(result.contains("❌ Фамилия не может быть пустой"));
+        assertTrue(result.contains("❌ Логин не может быть пустым"));
+        assertTrue(result.contains("❌ Некорректный номер телефона"));
+        assertTrue(result.contains("❌ Пароль должен быть не менее 6 символов"));
+    }
+
+    @Test
+    void testCreateUser_whenException_returnsErrorMessage() {
+        when(userClient.registerUser(any())).thenThrow(new RuntimeException("Ошибка регистрации"));
+
+        String result = userService.createUser("Name", "Surname", "user", "+77001112233", "password",
+                List.of(Role.USER));
+
+        assertEquals("❌ Ошибка при создании пользователя: Ошибка регистрации", result);
+    }
+
+    @Test
+    void testSearchUsers_whenFound_returnsFormatted() {
+        UserDto user = UserDto.builder()
+                .id(1L)
+                .name("Ivan")
+                .surname("Ivanov")
+                .username("ivan123")
+                .phone("+77001112233")
+                .balance(50.0)
+                .isActive(true)
+                .build();
+
+        when(userClient.getAllUsers(1, 10)).thenReturn(List.of(user));
+
+        String result = userService.searchUsers("ivan", 1, 10);
+
+        assertEquals(Utils.formatUser(user), result);
+    }
+
+    @Test
+    void testSearchUsers_whenNotFound_returnsErrorMessage() {
+        when(userClient.getAllUsers(1, 10)).thenReturn(List.of());
+
+        String result = userService.searchUsers("notfound", 1, 10);
+
+        assertEquals("❌ Пользователь с именем 'notfound' не найден.", result);
+    }
+
+    @Test
+    void testGetUsers_whenFound_returnsFormattedList() {
+        UserDto user = UserDto.builder()
+                .id(1L)
+                .name("Anna")
+                .surname("Smith")
+                .username("anna_s")
+                .phone("+77001112233")
+                .balance(90.0)
+                .isActive(true)
+                .build();
+
+        when(userClient.getAllUsers(0, 5)).thenReturn(List.of(user));
+
+        String result = userService.getUsers(0, 5);
+
+        assertEquals(Utils.formatUser(user), result);
+    }
+
+    @Test
+    void testGetUsers_whenEmpty_returnsErrorMessage() {
+        when(userClient.getAllUsers(0, 5)).thenReturn(Collections.emptyList());
+
+        String result = userService.getUsers(0, 5);
+
+        assertEquals("❌ Пользователи не найдены.", result);
+    }
+
+    @Test
+    void testRemoveUser_whenSuccess_returnsSuccessMessage() {
+        String result = userService.removeUser(10L);
+
+        verify(userClient).deleteUser(10L);
+        assertEquals("🗑 Пользователь с ID 10 удален.", result);
+    }
+
+    @Test
+    void testRemoveUser_whenException_returnsErrorMessage() {
+        doThrow(new RuntimeException("Удаление невозможно")).when(userClient).deleteUser(15L);
+
+        String result = userService.removeUser(15L);
+
+        assertEquals("❌ Ошибка при удалении пользователя: Удаление невозможно", result);
+    }
+
+    @Test
+    void testFillBalance_returnsProcessingMessage_andSendsKafkaEvent() {
+        String result = userService.fillBalance(5L, 100.0);
+
+        verify(kafkaProducer).fillBalance(5L, 100.0);
+        assertEquals("Запрос обрабатвается", result);
+    }
+}

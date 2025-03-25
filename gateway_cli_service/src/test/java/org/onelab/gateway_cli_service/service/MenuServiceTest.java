@@ -1,190 +1,163 @@
-//package org.onelab.gateway_cli_service.service;
-//
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.onelab.gateway_cli_service.entity.Dish;
-//import org.onelab.gateway_cli_service.entity.Menu;
-//import org.onelab.gateway_cli_service.kafka.KafkaProducer;
-//import org.onelab.gateway_cli_service.repository.DishRepository;
-//import org.onelab.gateway_cli_service.repository.MenuRepository;
-//import org.springframework.data.domain.Page;
-//import org.springframework.data.domain.PageImpl;
-//import org.springframework.data.domain.PageRequest;
-//
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class MenuServiceTest {
-//
-//    @Mock
-//    private MenuRepository menuRepository;
-//
-//    @Mock
-//    private DishRepository dishRepository;
-//
-//    @Mock
-//    private KafkaProducer kafkaProducer;
-//
-//    @InjectMocks
-//    private MenuServiceImpl menuService;
-//
-//    private Menu testMenu;
-//    private Dish testDish;
-//
-//    @BeforeEach
-//    void setUp() {
-//        testDish = Dish.builder()
-//                .id("dish-1")
-//                .name("Pizza")
-//                .description("Cheese Pizza")
-//                .price(12.99)
-//                .build();
-//
-//        testMenu = Menu.builder()
-//                .id("menu-1")
-//                .name("Italian Menu")
-//                .dishes(List.of(testDish))
-//                .build();
-//    }
-//
-//    @Test
-//    void shouldReturnMenu_WhenMenuExists() {
-//        when(menuRepository.findById("menu-1")).thenReturn(Optional.of(testMenu));
-//
-//        String result = menuService.getMenu("menu-1");
-//
-//        assertTrue(result.contains("Italian Menu"));
-//        assertTrue(result.contains("Pizza"));
-//        verify(menuRepository, times(1)).findById("menu-1");
-//    }
-//
-//    @Test
-//    void shouldReturnErrorMessage_WhenMenuDoesNotExist() {
-//        when(menuRepository.findById("menu-999")).thenReturn(Optional.empty());
-//
-//        String result = menuService.getMenu("menu-999");
-//
-//        assertEquals("❌ Меню с ID 'menu-999' не найдено.", result);
-//    }
-//
-//    @Test
-//    void shouldCreateMenu_WhenMenuDoesNotExist() {
-//        when(menuRepository.findByName("Italian Menu")).thenReturn(Optional.empty());
-//        when(dishRepository.findById("dish-1")).thenReturn(Optional.of(testDish));
-//
-//        String result = menuService.createMenu("Italian Menu", List.of("dish-1"));
-//
-//        assertTrue(result.contains("Создание меню: Italian Menu"));
-//        verify(kafkaProducer, times(1)).addMenu(any(Menu.class));
-//    }
-//
-//    @Test
-//    void shouldThrowError_WhenMenuAlreadyExists() {
-//        when(menuRepository.findByName("Italian Menu")).thenReturn(Optional.of(testMenu));
-//
-//        String result = menuService.createMenu("Italian Menu", List.of("dish-1"));
-//
-//        assertEquals("❌ Меню с именем 'Italian Menu' уже существует.", result);
-//    }
-//
-//    @Test
-//    void shouldRemoveMenu_WhenMenuExists() {
-//        when(menuRepository.findById("menu-1")).thenReturn(Optional.of(testMenu));
-//
-//        String result = menuService.removeMenu("menu-1");
-//
-//        assertTrue(result.contains("Удаление меню с ID: menu-1"));
-//        verify(kafkaProducer, times(1)).removeMenu("menu-1");
-//    }
-//
-//    @Test
-//    void shouldThrowError_WhenRemovingNonExistentMenu() {
-//        when(menuRepository.findById("menu-999")).thenReturn(Optional.empty());
-//
-//        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-//                menuService.removeMenu("menu-999"));
-//
-//        assertEquals("❌ Меню с ID 'menu-999' не найдено.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void shouldReturnMenus_WhenMenusExist() {
-//        PageRequest pageRequest = PageRequest.of(0, 10);
-//        List<Menu> menus = List.of(testMenu);
-//        Page<Menu> menuPage = new PageImpl<>(menus);
-//
-//        when(menuRepository.findAll(pageRequest)).thenReturn(menuPage);
-//
-//        String result = menuService.getMenus(1, 10);
-//
-//        assertTrue(result.contains("Italian Menu"));
-//    }
-//
-//    @Test
-//    void shouldReturnEmptyMessage_WhenNoMenusExist() {
-//        PageRequest pageRequest = PageRequest.of(0, 10);
-//        Page<Menu> emptyPage = Page.empty();
-//
-//        when(menuRepository.findAll(pageRequest)).thenReturn(emptyPage);
-//
-//        String result = menuService.getMenus(1, 10);
-//
-//        assertEquals("📭 Меню отсутствуют.", result);
-//    }
-//
-//    @Test
-//    void shouldAddDishToMenu_WhenMenuExists() {
-//        Menu emptyMenu = Menu.builder()
-//                .id("menu-1")
-//                .name("Italian Menu")
-//                .dishes(List.of())
-//                .build();
-//
-//        when(menuRepository.findById("menu-1")).thenReturn(Optional.of(emptyMenu));
-//        when(dishRepository.findAllById(List.of("dish-1"))).thenReturn(List.of(testDish));
-//
-//        String result = menuService.addDishToMenu("menu-1", List.of("dish-1"));
-//
-//        assertTrue(result.contains("Добавление блюд в меню: menu-1"));
-//        verify(kafkaProducer, times(1)).addDishToMenu(any(Menu.class), anyList());
-//    }
-//
-//
-//    @Test
-//    void shouldThrowError_WhenAddingDishToNonExistentMenu() {
-//        when(menuRepository.findById("menu-999")).thenReturn(Optional.empty());
-//
-//        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-//                menuService.addDishToMenu("menu-999", List.of("dish-1")));
-//
-//        assertEquals("❌ Меню с ID 'menu-999' не найдено.", exception.getMessage());
-//    }
-//
-//    @Test
-//    void shouldRemoveDishFromMenu_WhenMenuExists() {
-//        when(menuRepository.findById("menu-1")).thenReturn(Optional.of(testMenu));
-//
-//        String result = menuService.removeDishFromMenu("menu-1", List.of("dish-1"));
-//
-//        assertTrue(result.contains("Удаление блюд из меню: menu-1"));
-//        verify(kafkaProducer, times(1)).removeDishFromMenu(any(Menu.class), anyList());
-//    }
-//
-//    @Test
-//    void shouldThrowError_WhenRemovingDishFromNonExistentMenu() {
-//        when(menuRepository.findById("menu-999")).thenReturn(Optional.empty());
-//
-//        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-//                menuService.removeDishFromMenu("menu-999", List.of("dish-1")));
-//
-//        assertEquals("❌ Меню с ID 'menu-999' не найдено.", exception.getMessage());
-//    }
-//}
+package org.onelab.gateway_cli_service.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.onelab.common_lib.dto.DishDto;
+import org.onelab.common_lib.dto.MenuDto;
+import org.onelab.common_lib.dto.MenuRequestDto;
+import org.onelab.gateway_cli_service.client.RestaurantClient;
+import org.onelab.gateway_cli_service.utils.Utils;
+
+import java.util.List;
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class MenuServiceTest {
+
+    private RestaurantClient restaurantClient;
+    private MenuServiceImpl menuService;
+
+    @BeforeEach
+    void setUp() {
+        restaurantClient = mock(RestaurantClient.class);
+        menuService = new MenuServiceImpl(restaurantClient);
+    }
+
+    @Test
+    void testGetMenu_whenFound_returnsFormattedMenu() {
+        MenuDto menu = MenuDto.builder()
+                .id(1L)
+                .name("Lunch Menu")
+                .dishes(List.of(
+                        DishDto.builder().id(1L).name("Pizza").description("Cheese").price(9.99).build()
+                ))
+                .build();
+
+        when(restaurantClient.getMenu(1L)).thenReturn(menu);
+
+        String result = menuService.getMenu(1L);
+        String expected = Utils.formatMenu(menu);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testGetMenu_whenNotFound_returnsErrorMessage() {
+        when(restaurantClient.getMenu(999L)).thenThrow(new RuntimeException("Not found"));
+
+        String result = menuService.getMenu(999L);
+
+        assertEquals("❌ Меню с ID '999' не найдено.", result);
+    }
+
+    @Test
+    void testCreateMenu_whenValid_returnsSuccessMessage() {
+        String menuName = "Special Menu";
+        List<Long> dishIds = List.of(1L, 2L);
+
+        when(restaurantClient.addMenu(any(MenuRequestDto.class))).thenReturn("42");
+
+        String result = menuService.createMenu(menuName, dishIds);
+
+        assertEquals("✅ Меню 'Special Menu' создано. ID: 42", result);
+    }
+
+    @Test
+    void testCreateMenu_whenInvalid_returnsValidationMessage() {
+        String result = menuService.createMenu("", Collections.emptyList());
+
+        assertEquals("❌ Ошибка: Некорректное название меню!\n❌ Меню должно содержать хотя бы одно блюдо.\n", result);
+    }
+
+    @Test
+    void testCreateMenu_whenExceptionThrown_returnsErrorMessage() {
+        String name = "Dinner";
+        List<Long> ids = List.of(1L);
+
+        when(restaurantClient.addMenu(any(MenuRequestDto.class)))
+                .thenThrow(new RuntimeException("Ошибка создания"));
+
+        String result = menuService.createMenu(name, ids);
+
+        assertEquals("❌ Ошибка при создании меню: Ошибка создания", result);
+    }
+
+    @Test
+    void testRemoveMenu_whenSuccess_returnsSuccessMessage() {
+        String result = menuService.removeMenu(10L);
+
+        verify(restaurantClient).removeMenu(10L);
+        assertEquals("🗑️ Меню с ID '10' удалено.", result);
+    }
+
+    @Test
+    void testRemoveMenu_whenException_returnsErrorMessage() {
+        doThrow(new RuntimeException("Not found")).when(restaurantClient).removeMenu(20L);
+
+        String result = menuService.removeMenu(20L);
+
+        assertEquals("❌ Ошибка при удалении меню: Not found", result);
+    }
+
+    @Test
+    void testGetMenus_whenNotEmpty_returnsFormattedList() {
+        MenuDto menu = MenuDto.builder()
+                .id(1L)
+                .name("Menu 1")
+                .dishes(List.of(
+                        DishDto.builder().id(1L).name("Soup").description("Hot").price(3.0).build()
+                ))
+                .build();
+
+        when(restaurantClient.getMenus(1, 10)).thenReturn(List.of(menu));
+
+        String result = menuService.getMenus(1, 10);
+
+        assertEquals(Utils.formatMenu(menu), result);
+    }
+
+    @Test
+    void testGetMenus_whenEmpty_returnsEmptyMessage() {
+        when(restaurantClient.getMenus(1, 10)).thenReturn(Collections.emptyList());
+
+        String result = menuService.getMenus(1, 10);
+
+        assertEquals("📭 Меню отсутствуют.", result);
+    }
+
+    @Test
+    void testAddDishToMenu_whenSuccess_returnsSuccessMessage() {
+        String result = menuService.addDishToMenu(1L, List.of(1L, 2L));
+
+        verify(restaurantClient).addDishesToMenu(1L, List.of(1L, 2L));
+        assertEquals("✅ Добавлены блюда в меню: 1", result);
+    }
+
+    @Test
+    void testAddDishToMenu_whenException_returnsErrorMessage() {
+        doThrow(new RuntimeException("Ошибка")).when(restaurantClient).addDishesToMenu(any(), any());
+
+        String result = menuService.addDishToMenu(1L, List.of(1L));
+
+        assertEquals("❌ Ошибка при добавлении блюд в меню: Ошибка", result);
+    }
+
+    @Test
+    void testRemoveDishFromMenu_whenSuccess_returnsSuccessMessage() {
+        String result = menuService.removeDishFromMenu(2L, List.of(3L));
+
+        verify(restaurantClient).removeDishesFromMenu(2L, List.of(3L));
+        assertEquals("🗑️ Удалены блюда из меню: 2", result);
+    }
+
+    @Test
+    void testRemoveDishFromMenu_whenException_returnsErrorMessage() {
+        doThrow(new RuntimeException("Ошибка удаления")).when(restaurantClient).removeDishesFromMenu(any(), any());
+
+        String result = menuService.removeDishFromMenu(2L, List.of(5L));
+
+        assertEquals("❌ Ошибка при удалении блюд из меню: Ошибка удаления", result);
+    }
+}
