@@ -29,8 +29,6 @@ spring:
     password: qaraqurt
     driver-class-name: org.postgresql.Driver
 
-
-
 eureka:
   client:
     service-url:
@@ -49,3 +47,9 @@ feign:
       default:
         connectTimeout: 5000
         readTimeout: 5000
+
+camunda:
+  bpm:
+    client:
+      base-url: http://camunda-service:8080/engine-rest
+      lock-duration: 10000

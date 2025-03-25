@@ -101,8 +101,10 @@ services:
     stdin_open: true
     tty: true
     build:
-      context: ./gateway_cli_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: gateway_cli_service/Dockerfile
+    volumes:
+      - ~/.m2:/root/.m2
     depends_on:
       config-server:
         condition: service_started
@@ -121,8 +123,10 @@ services:
 
   user_service:
     build:
-      context: ./user_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: user_service/Dockerfile
+    volumes:
+      - ~/.m2:/root/.m2
     depends_on:
       config-server:
         condition: service_started
@@ -145,8 +149,10 @@ services:
 
   restaurant_service:
     build:
-      context: ./restaurant_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: restaurant_service/Dockerfile
+    volumes:
+      - ~/.m2:/root/.m2
     depends_on:
       config-server:
         condition: service_started
@@ -166,6 +172,52 @@ services:
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
       SPRING_ELASTICSEARCH_USERNAME: elastic
       SPRING_ELASTICSEARCH_PASSWORD: gempluspwd
+
+  camunda-service:
+    build:
+      context: .
+      dockerfile: camunda_service/Dockerfile
+    volumes:
+      - ~/.m2:/root/.m2
+    depends_on:
+      eureka-server:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:camunda;DB_CLOSE_DELAY=-1
+      CAMUNDA_BPM_ADMIN_USER_ID: demo
+      CAMUNDA_BPM_ADMIN_USER_PASSWORD: demo
+
+
+  order-worker:
+    build:
+      context: .
+      dockerfile: order-worker/Dockerfile
+    volumes:
+      - ~/.m2:/root/.m2
+    depends_on:
+      camunda-service:
+        condition: service_started
+      kafka:
+        condition: service_started
+    ports:
+      - "8086:8086"
+    environment:
+      SERVER_PORT: 8086
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CAMUNDA_BPM_CLIENT_BASE_URL: http://camunda-service:8080/engine-rest
+      SPRING_APPLICATION_JSON: '{
+        "eureka": {
+          "client": {
+            "service-url": {
+              "defaultZone": "http://eureka-server:8761/eureka/"
+            }
+          }
+        }
+      }'
+
 
 volumes:
   elastic_data:

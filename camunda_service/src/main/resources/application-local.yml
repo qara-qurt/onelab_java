@@ -1,0 +1,7 @@
+#camunda.bpm.admin-user:
+#  id: demo
+#  password: demo
+#
+#spring:
+#  application:
+#    name: camunda-service

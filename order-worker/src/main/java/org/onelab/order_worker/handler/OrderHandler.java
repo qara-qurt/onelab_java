@@ -31,7 +31,6 @@ public class OrderHandler {
     @Bean
     @ExternalTaskSubscription("create-order")
     public ExternalTaskHandler createOrderHandler () throws InterruptedException {
-        Thread.sleep(3000);
         return (externalTask, externalTaskService) -> {
             Long userId = externalTask.getVariable("userId");
             List<?> rawDishIds = externalTask.getVariable("dishIds");
@@ -70,7 +69,6 @@ public class OrderHandler {
     @Bean
     @ExternalTaskSubscription("withdraw-balance")
     public ExternalTaskHandler withdrawBalanceHandler() throws InterruptedException {
-        Thread.sleep(3000);
         return (externalTask, externalTaskService) -> {
             String businessKey = externalTask.getBusinessKey();
             String orderJson = externalTask.getVariable("orderJson");
@@ -92,7 +90,6 @@ public class OrderHandler {
     @Bean
     @ExternalTaskSubscription("notify-order")
     public ExternalTaskHandler notifyOrderHandler() throws InterruptedException {
-        Thread.sleep(3000);
         return (externalTask, externalTaskService) -> {
             boolean paymentSuccess = externalTask.getVariable("paymentSuccess");
             Long orderId = externalTask.getVariable("orderId");
